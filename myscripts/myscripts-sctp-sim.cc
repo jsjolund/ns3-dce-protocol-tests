@@ -58,12 +58,16 @@ int main(int argc, char *argv[]) {
 	DceApplicationHelper process;
 	ApplicationContainer apps;
 
+	// Output pcap: myscripts-sctp-sim-0-0.pcap
+	// Terminal output, run: cat files-0/var/log/*/stdout
 	process.SetBinary("my-sctp-server");
 	process.ResetArguments();
 	process.SetStackSize(1 << 16);
 	apps = process.Install(nodes.Get(0));
 	apps.Start(Seconds(1.0));
 
+	// Output pcap: myscripts-sctp-sim-1-0.pcap
+	// Terminal output, run: cat files-1/var/log/*/stdout
 	process.SetBinary("my-sctp-client");
 	process.ResetArguments();
 	process.ParseArguments("10.0.0.1");
