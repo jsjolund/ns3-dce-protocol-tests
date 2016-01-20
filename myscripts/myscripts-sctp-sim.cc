@@ -9,74 +9,70 @@ using namespace ns3;
 
 static void RunIp (Ptr<Node> node, Time at, std::string str)
 {
-  DceApplicationHelper process;
-  ApplicationContainer apps;
-  process.SetBinary ("ip");
-  process.SetStackSize (1<<16);
-  process.ResetArguments();
-  process.ParseArguments(str.c_str ());
-  apps = process.Install (node);
-  apps.Start (at);
+	DceApplicationHelper process;
+	ApplicationContainer apps;
+	process.SetBinary ("ip");
+	process.SetStackSize (1<<16);
+	process.ResetArguments();
+	process.ParseArguments(str.c_str ());
+	apps = process.Install (node);
+	apps.Start (at);
 }
 
-int main (int argc, char *argv[])
-{
-  uint32_t nPackets = 1;
-  CommandLine cmd;
-  cmd.AddValue("nPackets", "Number of packets to echo", nPackets);
-  cmd.Parse (argc, argv);
+int main(int argc, char *argv[]) {
+	uint32_t nPackets = 1;
+	CommandLine cmd;
+	cmd.AddValue("nPackets", "Number of packets to echo", nPackets);
+	cmd.Parse(argc, argv);
 
-  NodeContainer nodes;
-  nodes.Create (2);
+	NodeContainer nodes;
+	nodes.Create(2);
 
-  NetDeviceContainer devices;
+	NetDeviceContainer devices;
 
-  PointToPointHelper p2p;
-  p2p.SetDeviceAttribute ("DataRate", StringValue ("5Gbps"));
-  p2p.SetChannelAttribute ("Delay", StringValue ("1ms"));
-  devices = p2p.Install (nodes);
-  p2p.EnablePcapAll ("myscripts-sctp-sim");
+	PointToPointHelper p2p;
+	p2p.SetDeviceAttribute("DataRate", StringValue("5Gbps"));
+	p2p.SetChannelAttribute("Delay", StringValue("1ms"));
+	devices = p2p.Install(nodes);
+	p2p.EnablePcapAll("myscripts-sctp-sim");
 
-  DceManagerHelper processManager;
-  processManager.SetTaskManagerAttribute ("FiberManagerType",
-                                          StringValue ("UcontextFiberManager"));
-  // processManager.SetLoader ("ns3::DlmLoaderFactory");
-  processManager.SetNetworkStack("ns3::LinuxSocketFdFactory", "Library", StringValue ("liblinux.so"));
-  LinuxStackHelper stack;
-  stack.Install (nodes);
+	DceManagerHelper processManager;
+	processManager.SetTaskManagerAttribute("FiberManagerType", StringValue("UcontextFiberManager"));
+	// processManager.SetLoader ("ns3::DlmLoaderFactory");
+	processManager.SetNetworkStack("ns3::LinuxSocketFdFactory", "Library", StringValue("liblinux.so"));
+	LinuxStackHelper stack;
+	stack.Install(nodes);
 
-  Ipv4AddressHelper address;
-  address.SetBase ("10.0.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer interfaces = address.Assign (devices);
+	Ipv4AddressHelper address;
+	address.SetBase("10.0.0.0", "255.255.255.0");
+	Ipv4InterfaceContainer interfaces = address.Assign(devices);
 
-  processManager.Install (nodes);
+	processManager.Install(nodes);
 
+	for (int n = 0; n < 2; n++) {
+		RunIp(nodes.Get(n), Seconds(0.2), "link show");
+		RunIp(nodes.Get(n), Seconds(0.3), "route show table all");
+		RunIp(nodes.Get(n), Seconds(0.4), "addr list");
+	}
 
-  for (int n=0; n < 2; n++)
-    {
-      RunIp (nodes.Get (n), Seconds (0.2), "link show");
-      RunIp (nodes.Get (n), Seconds (0.3), "route show table all");
-      RunIp (nodes.Get (n), Seconds (0.4), "addr list");
-    }
+	DceApplicationHelper process;
+	ApplicationContainer apps;
 
-  DceApplicationHelper process;
-  ApplicationContainer apps;
+	process.SetBinary("my-sctp-server");
+	process.ResetArguments();
+	process.SetStackSize(1 << 16);
+	apps = process.Install(nodes.Get(0));
+	apps.Start(Seconds(1.0));
 
-  process.SetBinary ("my-sctp-server");
-  process.ResetArguments ();
-  process.SetStackSize (1<<16);
-  apps = process.Install (nodes.Get (0));
-  apps.Start (Seconds (1.0));
+	process.SetBinary("my-sctp-client");
+	process.ResetArguments();
+	process.ParseArguments("10.0.0.1");
+	apps = process.Install(nodes.Get(1));
+	apps.Start(Seconds(1.5));
 
-  process.SetBinary ("my-sctp-client");
-  process.ResetArguments ();
-  process.ParseArguments ("10.0.0.1");
-  apps = process.Install (nodes.Get (1));
-  apps.Start (Seconds (1.5));
+	Simulator::Stop (Seconds (1000.0));
+	Simulator::Run ();
+	Simulator::Destroy ();
 
-  Simulator::Stop (Seconds (1000.0));
-  Simulator::Run ();
-  Simulator::Destroy ();
-
-  return 0;
+	return 0;
 }
