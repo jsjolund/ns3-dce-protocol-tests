@@ -11,5 +11,5 @@ git checkout -t origin/master
 ###Running
 ```
 ./waf configure --with-ns3=$HOME/ns3-dce-linux/build/
-./waf --run "myscripts-sctp-sim"
+./waf --run "my-sctp-test"
 ```
