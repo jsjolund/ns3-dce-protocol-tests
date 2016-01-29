@@ -25,7 +25,6 @@ void send_chars(int sock, int to_stream, int num_chars) {
     
     // Loop over characters to send
     for (char_i = 0; char_i < num_chars; char_i++) {
-        
         if ((char_i == num_chars - 1 && num_chars < buffer_size ) 
                 || (char_i % buffer_size == 0 && char_i > 0)) {
                     
@@ -106,8 +105,11 @@ int main(int argc, char **argv) {
 			exit(-1);
 		}
         
-		loop_send_file(sock_server, 1, "bible.txt");
+		//loop_send_file(sock_server, 1, "bible.txt");
+		loop_send_chars(sock_server, 1, 16384);
+		
 		//loop_send_chars(sock_server, 4, 128);
+		
 	}
 
 	close(sock_listen);

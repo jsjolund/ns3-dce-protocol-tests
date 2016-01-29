@@ -70,10 +70,6 @@ int main(int argc, char **argv) {
 		stat = sctp_recvmsg(connect_sock, (void *) buffer, sizeof(buffer), 
 			(struct sockaddr *) NULL, 0, &s_sndrcvinfo, &flags);
 		//printf("stat = %i\n", stat);
-		if (stat > 0) {
-			buffer[stat] = 0;
-			//printf("(Stream %i) %s\n", s_sndrcvinfo.sinfo_stream, buffer);
-		}
 	}
 	/* Close our socket and exit */
 	close(connect_sock);

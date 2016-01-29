@@ -7,7 +7,7 @@ def configure(conf):
 ##, 'my-sctp-server.cc', 'my-sctp-client.cc'
 
 def build(bld):
-    bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point'],
+    bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point', 'csma'],
 				  target='bin/my-sctp-test',
 				  source=['myscripts-sctp-sim.cc'],)
 				  
