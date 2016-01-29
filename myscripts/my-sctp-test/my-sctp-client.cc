@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 	initmsg.sinit_max_attempts = 4;
 	stat = setsockopt(connect_sock, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg));
 	if (stat < 0) {
-		perror("setsockopt error");
+		perror("setsockopt error\n");
 		exit(-1);
 	}
 
@@ -41,18 +41,23 @@ int main(int argc, char **argv) {
 	server_addr.sin_addr.s_addr = inet_addr(argv[1]);
 	stat = connect(connect_sock, (struct sockaddr *) &server_addr, sizeof(server_addr));
 	if (stat < 0) {
-		perror("connect error");
+		perror("connect error\n");
 		exit(-1);
 	}
 
 	memset(&s_events, 0, sizeof(s_events));
 	s_events.sctp_data_io_event = 1;
-	stat = setsockopt(connect_sock, SOL_SCTP, SCTP_EVENTS, (const void *) &s_events, sizeof(s_events));
+	
+	// The size of events is 9, you can get the struct sctp_event_subscribe from the sctp.h. 
+	// But as described in the section 9.14 of Unix Network Programming Volume 1, 
+	// there are only 8 events in the struct sctp_event_subscribe, not 9. 
+	// So if you set the value to 9 (sizeof(s_events)), it will be error.
+	stat = setsockopt(connect_sock, SOL_SCTP, SCTP_EVENTS, (const void *) &s_events, 9);
 	if (stat < 0) {
-		perror("event error");
-		//exit (-1);
+		perror("event error\n");
+		exit (-1);
 	}
-
+	
 	slen = sizeof(s_status);
 	stat = getsockopt(connect_sock, SOL_SCTP, SCTP_STATUS, (void *) &s_status, (socklen_t *) &slen);
 
@@ -64,10 +69,10 @@ int main(int argc, char **argv) {
 	while (1) {
 		stat = sctp_recvmsg(connect_sock, (void *) buffer, sizeof(buffer), 
 			(struct sockaddr *) NULL, 0, &s_sndrcvinfo, &flags);
-		printf("stat = %i\n", stat);
+		//printf("stat = %i\n", stat);
 		if (stat > 0) {
 			buffer[stat] = 0;
-			printf("(Stream %i) %s\n", s_sndrcvinfo.sinfo_stream, buffer);
+			//printf("(Stream %i) %s\n", s_sndrcvinfo.sinfo_stream, buffer);
 		}
 	}
 	/* Close our socket and exit */

@@ -38,24 +38,17 @@ void send_chars(int sock, int to_stream, int num_chars) {
 
 // Sends a file to specified SCTP stream
 void send_file(int sock, int to_stream, const char* file_path) {
-    int stat;
-	int content_size = sizeof(content);
+	int sctp_stat;
+	int bytes;
 	int buffer_size = 1024;
-	char buffer[buffer_size];
-    streampos size;
+    FILE* filp = fopen(file_path, "rb" );
+    if (!filp) { printf("Error: could not open file %s\n", file_path); return; }
 
-    ifstream file (file_path, ios::in|ios::binary);
-    if (file.is_open()) {
-        while(file.read(buffer, buffer_size)) {
-            // TODO: Last part of file which does not fit in buffer gets left out
-            size = file.gcount();
-            stat = sctp_sendmsg(sock, buffer, (size_t) buffer_size, NULL, 0, 0, 0, to_stream, 0, 0);
-            printf("\nSTAT=%i, CONTENT=%s\n", stat, buffer);
-        }
-        file.close();
-    } else {
-        printf("Failed to open file\n");
+    char * buffer = new char[buffer_size];
+    while ( (bytes = fread(buffer, sizeof(char), buffer_size, filp)) > 0 ) {
+		sctp_stat = sctp_sendmsg(sock, buffer, (size_t) bytes, NULL, 0, 0, 0, to_stream, 0, 0);
     }
+    fclose(filp);
 }
 
 void loop_send_chars(int sock, int num_streams, int num_chars) {
@@ -113,8 +106,8 @@ int main(int argc, char **argv) {
 			exit(-1);
 		}
         
-		loop_send_file(sock_server, 3, "bible.txt");
-		loop_send_chars(sock_server, 4, 128);
+		loop_send_file(sock_server, 1, "bible.txt");
+		//loop_send_chars(sock_server, 4, 128);
 	}
 
 	close(sock_listen);
