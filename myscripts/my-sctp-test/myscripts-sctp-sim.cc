@@ -105,6 +105,11 @@ int main(int argc, char *argv[]) {
 	// Terminal output, run: cat files-0/var/log/*/stdout
 	process.SetBinary("my-sctp-server");
 	process.ResetArguments();
+	process.AddArguments("-d", "25600"); // amount of data per stream in bytes
+	process.AddArguments("-t", "5"); // packets time to live in milliseconds (0 == ttl disabled)
+	process.AddArguments("-f", "bible.txt"); // file to send
+	process.AddArguments("-u", ""); // un-ordered delivery of data
+	process.AddArguments("-s", "4"); // number of streams
 	process.SetStackSize(1 << 16);
 	apps = process.Install(nodes.Get(0));
 	apps.Start(Seconds(1.0));

@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
 	connect_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 	memset(&initmsg, 0, sizeof(initmsg));
-	
+
 	// TODO: These should be sent as function parameters probably
 	initmsg.sinit_num_ostreams = 10;          // Number of Output Stream
 	initmsg.sinit_max_instreams = 10;      // Number of Input Stream
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
 	memset(&s_events, 0, sizeof(s_events));
 	s_events.sctp_data_io_event = 1;
-	
+
 	// The size of events is 9, you can get the struct sctp_event_subscribe from the sctp.h. 
 	// But as described in the section 9.14 of Unix Network Programming Volume 1, 
 	// there are only 8 events in the struct sctp_event_subscribe, not 9. 
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 		perror("event error\n");
 		exit (-1);
 	}
-	
+
 	slen = sizeof(s_status);
 	stat = getsockopt(connect_sock, SOL_SCTP, SCTP_STATUS, (void *) &s_status, (socklen_t *) &slen);
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
 	while (1) {
 		stat = sctp_recvmsg(connect_sock, (void *) buffer, sizeof(buffer), 
-			(struct sockaddr *) NULL, 0, &s_sndrcvinfo, &flags);
+				(struct sockaddr *) NULL, 0, &s_sndrcvinfo, &flags);
 		//printf("stat = %i\n", stat);
 	}
 	/* Close our socket and exit */

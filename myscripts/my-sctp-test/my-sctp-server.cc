@@ -17,63 +17,89 @@
 using namespace std;
 
 // Sends lorem ipsum text to specified SCTP stream
-void send_chars(int sock, int to_stream, int num_chars) {
-    int stat, char_i;
-    int content_size = sizeof(content);
+void send_chars(int sock, int to_stream, int ttl, int flags, int num_chars) {
+	int stat, char_i;
+	int content_size = sizeof(content);
 	int buffer_size = 1024;
 	char buffer[buffer_size];
-    
-    // Loop over characters to send
-    for (char_i = 0; char_i < num_chars; char_i++) {
-        if ((char_i == num_chars - 1 && num_chars < buffer_size ) 
-                || (char_i % buffer_size == 0 && char_i > 0)) {
-                    
-            // The buffer is full, or we put in the required number of characters, so send
-            stat = sctp_sendmsg(sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, 0, to_stream, 0, 0);
-        }
-        buffer[char_i % buffer_size] = content[char_i % content_size];
-    }
-}
 
-// Sends a file to specified SCTP stream
-void send_file(int sock, int to_stream, const char* file_path) {
-	int sctp_stat;
-	int bytes;
-	int buffer_size = 1024;
-    FILE* filp = fopen(file_path, "rb" );
-    if (!filp) { printf("Error: could not open file %s\n", file_path); return; }
+	// Loop over characters to send
+	for (char_i = 0; char_i < num_chars; char_i++) {
+		if ((char_i == num_chars - 1 && num_chars < buffer_size ) 
+				|| (char_i % buffer_size == 0 && char_i > 0)) {
 
-    char * buffer = new char[buffer_size];
-    while ( (bytes = fread(buffer, sizeof(char), buffer_size, filp)) > 0 ) {
-		sctp_stat = sctp_sendmsg(sock, buffer, (size_t) bytes, NULL, 0, 0, 0, to_stream, 0, 0);
-    }
-    fclose(filp);
-}
-
-void loop_send_chars(int sock, int num_streams, int num_chars) {
-    int stream_i;
-	for (stream_i = 0; stream_i < num_streams; stream_i++) {
-        send_chars(sock, stream_i, num_chars);
+			// The buffer is full, or we put in the required number of characters, so send
+			stat = sctp_sendmsg(sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, to_stream, ttl, 0);
+		}
+		buffer[char_i % buffer_size] = content[char_i % content_size];
 	}
 }
 
+// Sends a file to specified SCTP stream
+void send_file(int sock, int to_stream, int ttl, int flags, const char* file_path) {
+	int sctp_stat;
+	int bytes;
+	int buffer_size = 1024;
+	FILE* filp = fopen(file_path, "rb" );
+	if (!filp) { printf("Error: could not open file %s\n", file_path); return; }
 
-void loop_send_file(int sock, int num_streams, const char* file_path) {
-    int stream_i;
+	char * buffer = new char[buffer_size];
+	while ( (bytes = fread(buffer, sizeof(char), buffer_size, filp)) > 0 ) {
+		sctp_stat = sctp_sendmsg(sock, buffer, (size_t) bytes, NULL, 0, 0, flags, to_stream, ttl, 0);
+	}
+	fclose(filp);
+}
+
+void loop_send_chars(int sock, int num_streams, int ttl, int flags, int num_chars) {
+	int stream_i;
 	for (stream_i = 0; stream_i < num_streams; stream_i++) {
-        send_file(sock, stream_i, file_path);
+		send_chars(sock, stream_i, ttl, flags, num_chars);
+	}
+}
+
+void loop_send_file(int sock, int num_streams, int ttl, int flags, const char* file_path) {
+	int stream_i;
+	for (stream_i = 0; stream_i < num_streams; stream_i++) {
+		send_file(sock, stream_i, ttl, flags, file_path);
 	}
 }
 
 int main(int argc, char **argv) {
+
 	int sock_listen, sock_server, stat;
 	struct sockaddr_in server_addr;
 	struct sctp_initmsg s_initmsg;
-	int echo_port;
+	int echo_port = 3007;
+	const int MAX_STREAMS = 1024;
 	int i = 0;
 
-	echo_port = 3007;
+	unsigned int bytes_to_transfer = 0;
+	unsigned int ttl = 0;
+	unsigned int flags = 0;
+	char* file_path_to_transfer;
+	unsigned int num_streams = 1;
 
+	while ((i = getopt (argc, argv, "f:d:t:s:u")) != -1) {
+		switch (i) {
+			case 'd':
+				bytes_to_transfer = atoi(optarg);	
+				break;
+			case 'f':
+				file_path_to_transfer = optarg;
+				break;
+			case 't':
+				ttl = atoi(optarg);
+				break;
+			case 's':
+				num_streams = atoi(optarg);
+				break;
+			case 'u':
+				flags |= SCTP_UNORDERED;
+				break;
+			default:
+				break;
+		}
+	}
 	sock_listen = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 
 	memset(&server_addr, 0, sizeof(server_addr));
@@ -83,11 +109,11 @@ int main(int argc, char **argv) {
 
 	stat = bind(sock_listen, (struct sockaddr *) &server_addr, sizeof(server_addr));
 
-	// SCTP parameter 	// TODO: These should be sent as function parameters probably
+	// SCTP parameter
 	memset(&s_initmsg, 0, sizeof(s_initmsg));
-	s_initmsg.sinit_num_ostreams = 10;
-	s_initmsg.sinit_max_instreams = 10;
-	s_initmsg.sinit_max_attempts = 5;
+	s_initmsg.sinit_num_ostreams = MAX_STREAMS;
+	s_initmsg.sinit_max_instreams = MAX_STREAMS;
+	s_initmsg.sinit_max_attempts = MAX_STREAMS;
 
 	stat = setsockopt(sock_listen, IPPROTO_SCTP, SCTP_INITMSG, &s_initmsg, sizeof(s_initmsg));
 	if (stat < 0) {
@@ -96,7 +122,7 @@ int main(int argc, char **argv) {
 	}
 
 	listen(sock_listen, 5);
-    
+
 	while (1) {
 		printf("SCTP server accepting\n");
 		sock_server = accept(sock_listen, (struct sockaddr *) NULL, (socklen_t *) NULL);
@@ -104,12 +130,12 @@ int main(int argc, char **argv) {
 			perror("accept");
 			exit(-1);
 		}
-        
-		//loop_send_file(sock_server, 1, "bible.txt");
-		loop_send_chars(sock_server, 1, 16384);
-		
-		//loop_send_chars(sock_server, 4, 128);
-		
+		if (((unsigned)strlen(file_path_to_transfer)) > 0) {
+			loop_send_file(sock_server, num_streams, ttl, flags, file_path_to_transfer);
+		}
+		if (bytes_to_transfer > 0) {
+			loop_send_chars(sock_server, num_streams, ttl, flags, bytes_to_transfer);
+		}
 	}
 
 	close(sock_listen);

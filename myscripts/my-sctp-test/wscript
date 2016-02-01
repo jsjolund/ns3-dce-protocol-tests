@@ -4,7 +4,6 @@ import ns3waf
 
 def configure(conf):
     ns3waf.check_modules(conf, ['core', 'network', 'dce', 'point-to-point'], mandatory = True)
-##, 'my-sctp-server.cc', 'my-sctp-client.cc'
 
 def build(bld):
     bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point', 'csma'],
