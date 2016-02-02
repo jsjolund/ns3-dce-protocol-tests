@@ -11,25 +11,22 @@
 #include <string>
 #include <ios>
 
-
+#define PCAP_PREFIX "myscripts-sctp-sim"
 
 using std::string;	
 using std::fstream;
 NS_LOG_COMPONENT_DEFINE ("HelloSimulator");
 
 
-template <typename T>
-std::string to_string(T value)
-{
+template <typename T> std::string to_string(T value) {
 	std::ostringstream os ;
 	os << value ;
 	return os.str() ;
 }
-		
+
 using namespace ns3;	
 
-static void RunIp (Ptr<Node> node, Time at, std::string str)
-{
+static void RunIp (Ptr<Node> node, Time at, std::string str) {
 	DceApplicationHelper process;
 	ApplicationContainer apps;
 	process.SetBinary ("ip");
@@ -40,43 +37,33 @@ static void RunIp (Ptr<Node> node, Time at, std::string str)
 	apps.Start (at);
 }
 
-int main(int argc, char *argv[]) {
-	int number_of_nodes = 2; // NOTE: must be at least 2
-	int data_rate = 1;
-	int data_delay = 30;
-	int time_to_live, number_of_streams, retransmission_timeout, hb_interval = 0;
-	//uint32_t nPackets = 1;
-	//CommandLine cmd;
-	//cmd.AddValue("nPackets", "Number of packets to echo", nPackets);
-	//cmd.Parse(argc, argv);
+int run_simulation(int number_of_nodes, int data_rate, int data_delay, 
+		int transfer_data, int time_to_live, int number_of_streams, int unordered) {
+
 	std::string number_of_nodes_str = to_string(number_of_nodes);
 	std::string data_rate_str = to_string(data_rate);
-	std:string data_delay_str = to_string(data_delay);
+	std::string data_delay_str = to_string(data_delay);
+	std::string transfer_data_str = to_string(transfer_data);
+	std::string time_to_live_str = to_string(time_to_live);
+	std::string number_of_streams_str = to_string(number_of_streams);
+	std::string unordered_str = to_string(unordered);
+
+	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str + "\nData rate: " + data_rate_str + "\nData delay: " + data_delay_str
+			+ "\nAmount of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str + "\nNumber of streams: " + number_of_streams_str + "\n");
 
 	GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
 
 	NodeContainer nodes;
 	nodes.Create(number_of_nodes);
-	NS_LOG_UNCOND("Number of nodes created: " + number_of_nodes_str);
-	
+
 	NetDeviceContainer devices;
 
-	//PointToPointHelper p2p;
-	//NS_LOG_UNCOND("Data rate set to: " + data_rate_str + "Mbps");
-	//p2p.SetDeviceAttribute("DataRate", StringValue(data_rate_str + "Mbps"));
-	//NS_LOG_UNCOND("Data delay set to: " + data_delay_str + "ms");
-	//p2p.SetChannelAttribute("Delay", StringValue(data_delay_str +"ms"));
-	//NS_LOG_UNCOND("pre node installation");
-	//devices = p2p.Install(nodes);
-	//NS_LOG_UNCOND("post node installation");
-	//p2p.EnablePcapAll("myscripts-sctp-sim");
-	
 	CsmaHelper csma;
 	csma.SetChannelAttribute("DataRate", StringValue(data_rate_str + "Mbps"));
 	csma.SetChannelAttribute("Delay", TimeValue(MilliSeconds(data_delay)));
 	devices = csma.Install(nodes);
-	
-	csma.EnablePcapAll ("myscripts-sctp-sim");
+
+	csma.EnablePcapAll(PCAP_PREFIX);
 
 	DceManagerHelper processManager;
 	processManager.SetTaskManagerAttribute("FiberManagerType", StringValue("UcontextFiberManager"));
@@ -90,7 +77,6 @@ int main(int argc, char *argv[]) {
 	Ipv4InterfaceContainer interfaces = address.Assign(devices);
 
 	processManager.Install(nodes);
-	NS_LOG_UNCOND("Installed nodes");
 
 	for (int n = 0; n < number_of_nodes; n++) {
 		RunIp(nodes.Get(n), Seconds(0.2), "link show");
@@ -101,23 +87,24 @@ int main(int argc, char *argv[]) {
 	DceApplicationHelper process;
 	ApplicationContainer apps;
 
-	// Output pcap: myscripts-sctp-sim-0-0.pcap
+	// Server output pcap: myscripts-sctp-sim-0-0.pcap
 	// Terminal output, run: cat files-0/var/log/*/stdout
 	process.SetBinary("my-sctp-server");
 	process.ResetArguments();
-	process.AddArguments("-d", "25600"); // amount of data per stream in bytes
-	process.AddArguments("-t", "5"); // packets time to live in milliseconds (0 == ttl disabled)
-	process.AddArguments("-f", "bible.txt"); // file to send
-	process.AddArguments("-u", ""); // un-ordered delivery of data
-	process.AddArguments("-s", "4"); // number of streams
+
+	process.AddArguments("-d", transfer_data_str); // amount of data per stream in bytes
+	process.AddArguments("-t", time_to_live_str); // packets time to live in milliseconds (0 == ttl disabled)
+	//process.AddArguments("-f", "bible.txt"); // file to send
+	process.AddArguments("-u", unordered_str); // un-ordered delivery of data
+	process.AddArguments("-s", number_of_streams_str); // number of streams
+
 	process.SetStackSize(1 << 16);
 	apps = process.Install(nodes.Get(0));
 	apps.Start(Seconds(1.0));
 
-	// Output pcap: myscripts-sctp-sim-1-0.pcap
+	// Clients output pcap: myscripts-sctp-sim-i-0.pcap
 	// Terminal output, run: cat files-1/var/log/*/stdout
-	for(int i = 1; i < number_of_nodes; i++)
-	{
+	for(int i = 1; i < number_of_nodes; i++) {
 		process.SetBinary("my-sctp-client");
 		process.ResetArguments();
 		process.ParseArguments("10.0.0.1");
@@ -130,4 +117,21 @@ int main(int argc, char *argv[]) {
 	Simulator::Destroy ();
 
 	return 0;
+}
+
+int main(int argc, char *argv[]) {
+	int number_of_nodes = 2; // NOTE: must be at least 2
+	int data_rate = 1; // Data rate for simulation in Mbps
+	int data_delay = 30; // Server delay in ms
+	int transfer_data_start = 256; // Amount of bytes to send, starting value
+	int transfer_data_end = 65536; // Amount of bytes to send, ending value
+	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
+	int number_of_streams = 2; // Number of sctp streams
+	int retransmission_timeout = 0;
+	int unordered = 0;	
+	int hb_interval = 0;	
+
+	for(int i = transfer_data_start; i <= transfer_data_end; i*=2) {
+		run_simulation(number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+	}
 }
