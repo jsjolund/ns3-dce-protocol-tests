@@ -12,6 +12,7 @@
 #include <netinet/sctp.h>
 
 int main(int argc, char **argv) {
+	const int MAX_STREAMS = 512;
 	int connect_sock, stat, port, slen, i, flags;
 	struct sctp_initmsg initmsg;
 	struct sockaddr_in server_addr;
@@ -26,9 +27,9 @@ int main(int argc, char **argv) {
 	memset(&initmsg, 0, sizeof(initmsg));
 
 	// TODO: These should be sent as function parameters probably
-	initmsg.sinit_num_ostreams = 10;          // Number of Output Stream
-	initmsg.sinit_max_instreams = 10;      // Number of Input Stream
-	initmsg.sinit_max_attempts = 4;
+	initmsg.sinit_num_ostreams = MAX_STREAMS;          // Number of Output Stream
+	initmsg.sinit_max_instreams = MAX_STREAMS;      // Number of Input Stream
+	initmsg.sinit_max_attempts = MAX_STREAMS;
 	stat = setsockopt(connect_sock, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg));
 	if (stat < 0) {
 		perror("setsockopt error\n");

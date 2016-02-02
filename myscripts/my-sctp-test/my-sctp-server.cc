@@ -20,18 +20,23 @@ using namespace std;
 void send_chars(int sock, int to_stream, int ttl, int flags, int num_chars) {
 	int stat, char_i;
 	int content_size = sizeof(content);
-	int buffer_size = 1024;
-	char buffer[buffer_size];
+	int buffer_size = 1023;
+	char buffer[buffer_size + 1];
 
 	// Loop over characters to send
-	for (char_i = 0; char_i < num_chars; char_i++) {
-		if ((char_i == num_chars - 1 && num_chars < buffer_size ) 
-				|| (char_i % buffer_size == 0 && char_i > 0)) {
-
+	for (char_i = 0; char_i <= num_chars; char_i++) {
+		int content_i = char_i % content_size;
+		int buffer_i = char_i % buffer_size;
+		
+		printf("char_i=%i content_i=%i buffer_i=%i\n", char_i, content_i, buffer_i);
+		buffer[buffer_i] = content[content_i];
+		
+		if ((char_i + 1 == num_chars) || (buffer_i + 1 == buffer_size)) {
+			printf("sending\n");
+			buffer[buffer_i + 1] = '\0';
 			// The buffer is full, or we put in the required number of characters, so send
-			stat = sctp_sendmsg(sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, to_stream, ttl, 0);
+			stat = sctp_sendmsg(sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, to_stream, ttl, 0);	
 		}
-		buffer[char_i % buffer_size] = content[char_i % content_size];
 	}
 }
 
@@ -65,13 +70,11 @@ void loop_send_file(int sock, int num_streams, int ttl, int flags, const char* f
 }
 
 int main(int argc, char **argv) {
-
-	int sock_listen, sock_server, stat;
+	const int MAX_STREAMS = 512;
+	int sock_listen, sock_server, stat, i;
 	struct sockaddr_in server_addr;
 	struct sctp_initmsg s_initmsg;
 	int echo_port = 3007;
-	const int MAX_STREAMS = 1024;
-	int i = 0;
 
 	unsigned int bytes_to_transfer = 0;
 	unsigned int ttl = 0;
@@ -121,7 +124,7 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	listen(sock_listen, 5);
+	listen(sock_listen, 5); // http://linux.die.net/man/2/listen
 
 	while (1) {
 		printf("SCTP server accepting\n");
