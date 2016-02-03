@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <ios>
+#include <time.h>
 
 #define PCAP_PREFIX "myscripts-sctp-sim"
 
@@ -48,8 +49,8 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
 
-	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str + "\nData rate: " + data_rate_str + "\nData delay: " + data_delay_str
-			+ "\nAmount of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str + "\nNumber of streams: " + number_of_streams_str + "\n");
+	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str + "\nData rate: " + data_rate_str + " Mbps\nData delay: " + data_delay_str
+			+ " ms\nNumber of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str + "\nNumber of streams: " + number_of_streams_str + "\n");
 
 	GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
 
