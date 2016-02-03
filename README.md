@@ -1,3 +1,6 @@
+###About
+This project aims to asses the performance of the [SCTP](https://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol) network transport-layer protocol during different scenarios, using the network simulator [NS-3](https://www.nsnam.org/). More specifically, the Linux kernel implementation of SCTP called [lksctp](http://lksctp.sourceforge.net/) is accessed using the NS-3 framework [DCE](https://www.nsnam.org/overview/projects/direct-code-execution/).
+
 ###Dependencies
 Using Ubuntu 14.04, install the dependencies:
 
@@ -16,7 +19,7 @@ Optional: ```apt-get install python-pygccxml```, but having it installed may cau
 If you get a bulid error about compiler problems, add ```compiler-gcc5.h``` to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
 
 ###Downloading the project
-Assuming the NS3 DCE installation directory ```NS3_HOME="$HOME/ns3-dce-linux```
+Assuming the NS3 DCE installation directory ```NS3_HOME="$HOME/ns3-dce-linux"```
 ```
 cd $NS3_HOME/source/ns-3-dce
 git init
