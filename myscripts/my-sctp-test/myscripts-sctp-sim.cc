@@ -10,9 +10,10 @@
 #include <iostream>
 #include <string>
 #include <ios>
+#include <ctime>
 #include <time.h>
-
-#define PCAP_PREFIX "myscripts-sctp-sim"
+#include <sys/types.h>
+#include <dirent.h>
 
 using std::string;	
 using std::fstream;
@@ -49,6 +50,13 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
 
+	time_t t = time(0);   // get time now
+	struct tm * now = localtime( & t );
+	clock_t c = clock();
+	std::string clock_str = to_string(c);
+std:string timestamp = ("sim-" + to_string(now->tm_year + 1900) + "-" + to_string(now->tm_mon) + "-" + to_string(now->tm_mday) + "_" 
+			+ to_string(now->tm_hour) + ":" + to_string(now->tm_min) + ":" + to_string(now->tm_sec) + ":" + clock_str);
+
 	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str + "\nData rate: " + data_rate_str + " Mbps\nData delay: " + data_delay_str
 			+ " ms\nNumber of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str + "\nNumber of streams: " + number_of_streams_str + "\n");
 
@@ -64,7 +72,7 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 	csma.SetChannelAttribute("Delay", TimeValue(MilliSeconds(data_delay)));
 	devices = csma.Install(nodes);
 
-	csma.EnablePcapAll(PCAP_PREFIX);
+	csma.EnablePcapAll(timestamp);
 
 	DceManagerHelper processManager;
 	processManager.SetTaskManagerAttribute("FiberManagerType", StringValue("UcontextFiberManager"));
@@ -125,14 +133,32 @@ int main(int argc, char *argv[]) {
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 256; // Amount of bytes to send, starting value
-	int transfer_data_end = 65536; // Amount of bytes to send, ending value
-	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
+	int transfer_data_end = 65536*1024; // Amount of bytes to send, ending value
+	int time_to_live = 50; // Time to live of packets in milliseconds (0 == ttl disabled)
 	int number_of_streams = 2; // Number of sctp streams
+	int unordered = 0;	// If packets should be sent in order
+	
 	int retransmission_timeout = 0;
-	int unordered = 0;	
 	int hb_interval = 0;	
+
 
 	for(int i = transfer_data_start; i <= transfer_data_end; i*=2) {
 		run_simulation(number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+	}
+	
+	struct dirent **namelist;
+	int num_files, i;
+	num_files = scandir(".", &namelist, 0, alphasort);
+	if (num_files <= 0)
+		perror("The directory is empty");
+	else {
+		for (i = 0; i < num_files; i++) {
+			std::string filename = namelist[i]->d_name;
+			if(filename.substr(filename.find_last_of(".") + 1) == "pcap") {
+				NS_LOG_UNCOND(filename);
+			}
+			free(namelist[i]);
+		}
+		free(namelist);
 	}
 }
