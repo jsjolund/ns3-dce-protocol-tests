@@ -14,6 +14,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include "DataParser.h"
+#include "GraphHandler.h"
 
 using std::string;	
 using std::fstream;
@@ -133,7 +135,7 @@ int main(int argc, char *argv[]) {
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 256; // Amount of bytes to send, starting value
-	int transfer_data_end = 65536*1024; // Amount of bytes to send, ending value
+	int transfer_data_end = 65536; // Amount of bytes to send, ending value
 	int time_to_live = 50; // Time to live of packets in milliseconds (0 == ttl disabled)
 	int number_of_streams = 2; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
@@ -161,4 +163,8 @@ int main(int argc, char *argv[]) {
 		}
 		free(namelist);
 	}
+	std::string testfile = "test_sum-file";
+	std::string testpcap = "sim-2016-1-3_9:50:25:104568729-0-0";
+	start_graph_handler(testfile, testpcap);
+	
 }

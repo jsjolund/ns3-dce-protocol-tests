@@ -6,52 +6,25 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include "GraphHandler.h"
+#include "DataParser.h"
+
 
 using namespace std;
 
-
-
-
-int main(int argc, char* argv[]) {
-	int i = 2;
+void start_graph_handler(string target, string source) {
 	string summaryFileName, sourceFile, targetFile, sourceFile1;
-	int errorCheck;
-	
-	if(argc < 3) {
-		cout << "Please add a parameter to the program" << endl;
-		exit(1);
-	}
+
 	
 
-	summaryFileName = argv[1];
+	summaryFileName = target;
 	summaryFileName += ".dat";
-	ofstream erase(summaryFileName) ;
-	targetFile = argv[1];
+	ofstream erase(summaryFileName.c_str());
+	targetFile = target;
 
-	while(i < argc){
-		sourceFile = argv[i];
-		sourceFile1 = sourceFile + ".txt";
-
-		errorCheck = setenv("targetFile", argv[1], true);
-		if(errorCheck == -1){
-			cout<<"Variable error in program";
-			exit(1);
-		}
-
-		errorCheck = setenv("sourceFile", argv[i], true);
-		if(errorCheck == -1){
-			cout<<"Variable error in program";
-			exit(1);
-		}
-		
-		string testVar = "./DataParser sctp " + sourceFile + " to " + targetFile + " -printall";
-		system(testVar.c_str());
-		//system("./makefile.sh");
-		remove(sourceFile1.c_str());
-		i += 1;
-	}
+	sourceFile = source;
+	sourceFile1 = sourceFile + ".txt";
 	
-
-
-	
+	start_data_parser("sctp", sourceFile, targetFile, "-print");
+	remove(sourceFile1.c_str());
 }

@@ -6,50 +6,16 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include "DataParser.h"
 
 using namespace std;
 int NUM_OF_WORDS = 5;
 
-//Global methods
-string GUI_line();
-void ARG_ERROR_MSG();
-void HELP_MSG();
-
-//Declaration of the class
-class DataParser {
-	//Variables for file handling and printing
-	private : string filename;
-	private : string protocol;
-	private : string file_out;
-	private : string sum_file_out;
-	private : bool PRINT_PACKET;
-	private : bool PRINT_ALL;
-	//Variables for extracted parameters
-	private : double timeFix;
-	private : double totalUsefulData;
-	private : double totalData;
-	private : int dataChunks;
-	private : double totalTime;
-	private : int packetCounter;
-	//Constructor
-	public : DataParser(string, string, string, string, string);
-	//Functions
-	public : void GUI();
-	public : void packetExtractor();
-	public : void dataExtractor(ifstream&, int);
-	//Private data extracting functions
-	private : double getPacketLength(string[]);
-	private : double getEpochTime(string[]);
-	private : double getTTL(string[]);
-	private : bool getPacketProtocol(string[], int);
-	private : bool getHeartBeat(string[], int);
-	private : string getSender(string[]);
-	private : string getReciever(string[]);
-	private : string getStream(string[]);
-	private : int getPayload(string[]);
-	private : void insertPacketData(int, string, string, double, double, int, int, int);
-	private : void insertTotalData(int, double, double, double, int);
-};
+template <typename T> std::string to_string(T value) {
+	std::ostringstream os ;
+	os << value ;
+	return os.str() ;
+}
 
 //Constructor
 DataParser::DataParser(string f, string p, string o, string k, string pr) {
@@ -117,15 +83,15 @@ string GUI_line() {
 //Searches for packets within a .pcap file
 void DataParser::packetExtractor() {
 	int current_frame = 1;
-	ifstream reader(filename);
-	ofstream erase(file_out);
+	ifstream reader(filename.c_str());
+	ofstream erase(file_out.c_str());
 	string line;
 	string arr[NUM_OF_WORDS];
 
 	if(reader.is_open()){
 
 		while((getline(reader, line))) {
-			string frame = std::to_string(current_frame) + ":";
+			string frame = to_string(current_frame) + ":";
 			stringstream  str(line);
 			int i = 0;
 			while (str.good() && i < NUM_OF_WORDS) {
@@ -348,13 +314,15 @@ void DataParser::insertPacketData(int frame, string sender, string reciever, dou
 	 * [7] Sender IP
 	 * [8] Receiver IP
 	 */
+/*
 	ofstream myfile;
-	myfile.open(file_out, ios::app);
+	myfile.open(file_out.c_str(), ios::app);
 	if(myfile.is_open()){
 		myfile << frame << " " << (epoch_time - timeFix) << " " << time_to_live << " " << frame_length << " "
 			   << data_length << " " << data_chunk_count << " " << sender << " " << reciever << "\n";
 	}
 	myfile.close();
+	*/
 }
 
 void DataParser::insertTotalData(int packetCounter, double totalTime, double totalData,
@@ -376,7 +344,7 @@ void DataParser::insertTotalData(int packetCounter, double totalTime, double tot
 	 * [9] Average size of data chunks (header not included)
 	 */
 	ofstream myfile;
-	myfile.open(sum_file_out, ios::app);
+	myfile.open(sum_file_out.c_str(), ios::app);
 	if(myfile.is_open()){
 		myfile << packetCounter << " " << totalTime << " "  << totalData << " "
 			  << totalUsefulData << " " << dataPercentage << " " << speed << " "
@@ -424,38 +392,21 @@ void HELP_MSG() {
 	exit(1);
 }
 
-int main(int argc, char* argv[]) {
+void start_data_parser(string protocol, string sourceFile, string targetFile, string print) {
 
-	//Argument handling
-	if (argc == 2) {
-		string help = argv[1];
-		if (help != "-help") {
-			ARG_ERROR_MSG();
-		}
-		else {
-			HELP_MSG();
-		}
-	}
-	else if (argc == 6) {
-		string str = argv[3];
-		if (str != "to") {
-			ARG_ERROR_MSG();
-		}
-	}
-	else {
-		ARG_ERROR_MSG();
-	}
+	
+	//setenv("file", sourceFile.c_str(), true);
+	//system("./pcap-convert.sh");
+	string convert = "tshark -V -r " + sourceFile + ".pcap > " + sourceFile + ".txt";
+	system(convert.c_str());
 
-	setenv("file", argv[2], true);
-	system("./pcap-convert.sh");
 
-	string input_file = argv[2];
-	string output_file = input_file + "-parse.txt";
-	string sum_output_file = argv[4];
+	string input_file = sourceFile;
+	string output_file = sourceFile + "-parse.txt";
+	string sum_output_file = targetFile;
 	sum_output_file += ".dat";
 	input_file += ".txt";
-	string prot = argv[1];
-	string print = argv[5];
+	string prot = protocol;
 
 	DataParser parser(input_file, prot, output_file, sum_output_file, print);
 	parser.GUI();
