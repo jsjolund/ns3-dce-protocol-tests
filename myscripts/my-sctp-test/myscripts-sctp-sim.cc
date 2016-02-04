@@ -54,13 +54,22 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 
 	time_t t = time(0);   // get time now
 	struct tm * now = localtime( & t );
-	clock_t c = clock();
-	std::string clock_str = to_string(c);
-std:string timestamp = ("sim-" + to_string(now->tm_year + 1900) + "-" + to_string(now->tm_mon) + "-" + to_string(now->tm_mday) + "_" 
-			+ to_string(now->tm_hour) + ":" + to_string(now->tm_min) + ":" + to_string(now->tm_sec) + ":" + clock_str);
+	std::string clock_str = to_string(clock());
+	std:string timestamp = ("sim-"
+							/*+ "-" + to_string(now->tm_year + 1900) 
+							+ "-" + to_string(now->tm_mon) 
+							+ "-" + to_string(now->tm_mday) 
+							+ "_" + to_string(now->tm_hour) 
+							+ "-" + to_string(now->tm_min) 
+							+ "-" + to_string(now->tm_sec)*/
+							+ clock_str);
 
-	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str + "\nData rate: " + data_rate_str + " Mbps\nData delay: " + data_delay_str
-			+ " ms\nNumber of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str + "\nNumber of streams: " + number_of_streams_str + "\n");
+	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str 
+				+ "\nData rate: " + data_rate_str 
+				+ " Mbps\nData delay: " + data_delay_str
+				+ " ms\nNumber of bytes to transfer: " + transfer_data_str 
+				+ "\nTime to live: " + time_to_live_str 
+				+ "\nNumber of streams: " + number_of_streams_str + "\n");
 
 	GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
 
@@ -143,28 +152,28 @@ int main(int argc, char *argv[]) {
 	int retransmission_timeout = 0;
 	int hb_interval = 0;	
 
-
 	for(int i = transfer_data_start; i <= transfer_data_end; i*=2) {
 		run_simulation(number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 	}
 	
+	// Loop over all pcap files in current directory
 	struct dirent **namelist;
-	int num_files, i;
-	num_files = scandir(".", &namelist, 0, alphasort);
-	if (num_files <= 0)
-		perror("The directory is empty");
+	int num_files = scandir(".", &namelist, 0, alphasort);
+	if (num_files <= 0) perror("Could not find pcap files!");
 	else {
 		for (i = 0; i < num_files; i++) {
 			std::string filename = namelist[i]->d_name;
 			if(filename.substr(filename.find_last_of(".") + 1) == "pcap") {
-				NS_LOG_UNCOND(filename);
+				// We found a pcap file, input it to graph handler
+				size_t lastindex = filename.find_last_of("."); 
+				std::string filename_no_ext = filename.substr(0, lastindex); 
+				std::string filename_sum = filename_no_ext + "_sum-file";
+				
+				start_graph_handler(filename_sum, filename_no_ext);
 			}
 			free(namelist[i]);
 		}
 		free(namelist);
 	}
-	std::string testfile = "test_sum-file";
-	std::string testpcap = "sim-2016-1-3_9:50:25:104568729-0-0";
-	start_graph_handler(testfile, testpcap);
-	
+
 }
