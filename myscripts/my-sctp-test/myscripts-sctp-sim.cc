@@ -4,6 +4,8 @@
 #include "ns3/point-to-point-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/csma-module.h"
+#include "ns3/netanim-module.h"
+
 #include <fstream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +18,7 @@
 #include <dirent.h>
 #include "DataParser.h"
 #include "GraphHandler.h"
+
 
 using std::string;	
 using std::fstream;
@@ -43,7 +46,9 @@ static void RunIp (Ptr<Node> node, Time at, std::string str) {
 
 int run_simulation(int number_of_nodes, int data_rate, int data_delay, 
 		int transfer_data, int time_to_live, int number_of_streams, int unordered) {
-
+			
+	Time sim_stop_time = Seconds (1000.0);
+	
 	std::string number_of_nodes_str = to_string(number_of_nodes);
 	std::string data_rate_str = to_string(data_rate);
 	std::string data_delay_str = to_string(data_delay);
@@ -54,7 +59,6 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 
 	time_t t = time(0);   // get time now
 	struct tm * now = localtime( & t );
-	std::string clock_str = to_string(clock());
 	std:string timestamp = ("sim-"
 							/*+ "-" + to_string(now->tm_year + 1900) 
 							+ "-" + to_string(now->tm_mon) 
@@ -62,7 +66,7 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 							+ "_" + to_string(now->tm_hour) 
 							+ "-" + to_string(now->tm_min) 
 							+ "-" + to_string(now->tm_sec)*/
-							+ clock_str);
+							+ to_string(clock()));
 
 	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str 
 				+ "\nData rate: " + data_rate_str 
@@ -99,9 +103,10 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 	processManager.Install(nodes);
 
 	for (int n = 0; n < number_of_nodes; n++) {
-		RunIp(nodes.Get(n), Seconds(0.2), "link show");
-		RunIp(nodes.Get(n), Seconds(0.3), "route show table all");
-		RunIp(nodes.Get(n), Seconds(0.4), "addr list");
+		Ptr<Node> node = nodes.Get (n);
+		RunIp(node, Seconds(0.2), "link show");
+		RunIp(node, Seconds(0.3), "route show table all");
+		RunIp(node, Seconds(0.4), "addr list");
 	}
 
 	DceApplicationHelper process;
@@ -130,9 +135,21 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 		process.ParseArguments("10.0.0.1");
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(1.5));
+		
+		AnimationInterface::SetConstantPosition (nodes.Get (i), 10*(i-1), 10);
 	}
-
-	Simulator::Stop (Seconds (1000.0));
+	// Setup NetAnim tracing
+	AnimationInterface::SetConstantPosition (nodes.Get (0), ((double)number_of_nodes-2)*0.5*10.0, 0);
+	AnimationInterface anim (timestamp + "-netanim.xml");
+	anim.EnableIpv4L3ProtocolCounters (Seconds (0), sim_stop_time);
+	anim.EnableQueueCounters (Seconds (0), sim_stop_time);
+	anim.UpdateNodeColor (0, 255.0, 255.0, 0.0); // Yellow
+	anim.UpdateNodeDescription (0, "server");
+	for(int i = 1; i < number_of_nodes; i++) {
+		anim.UpdateNodeDescription (i, "client" + to_string(i));
+	}
+	
+	Simulator::Stop (sim_stop_time);
 	Simulator::Run ();
 	Simulator::Destroy ();
 
@@ -140,7 +157,7 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 2; // NOTE: must be at least 2
+	int number_of_nodes = 5; // NOTE: must be at least 2
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 256; // Amount of bytes to send, starting value
@@ -151,11 +168,12 @@ int main(int argc, char *argv[]) {
 	
 	int retransmission_timeout = 0;
 	int hb_interval = 0;	
-
-	for(int i = transfer_data_start; i <= transfer_data_end; i*=2) {
+	
+	int i;
+	for(i = transfer_data_start; i <= transfer_data_end; i*=2) {
 		run_simulation(number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 	}
-	
+
 	// Loop over all pcap files in current directory
 	struct dirent **namelist;
 	int num_files = scandir(".", &namelist, 0, alphasort);

@@ -3,10 +3,10 @@
 import ns3waf
 
 def configure(conf):
-    ns3waf.check_modules(conf, ['core', 'network', 'dce', 'point-to-point'], mandatory = True)
+    ns3waf.check_modules(conf, ['core', 'network', 'dce', 'point-to-point', 'netanim'], mandatory = True)
 
 def build(bld):
-    bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point', 'csma'],
+    bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point', 'csma', 'netanim'],
 				  target='bin/my-sctp-test',
 				  source=['DataParser.cc', 'GraphHandler.cc', 'myscripts-sctp-sim.cc'],)
 
