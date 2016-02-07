@@ -19,7 +19,10 @@ Optional: ```apt-get install python-pygccxml```, but having it installed may cau
 If you get a bulid error about compiler problems, add ```compiler-gcc5.h``` to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
 
 ###Downloading the project
-Assuming the NS3 DCE installation directory ```NS3_HOME="$HOME/ns3-dce-linux"```
+Assuming the NS3 DCE installation directory
+```
+NS3_HOME="$HOME/ns3-dce-linux"
+```
 ```
 cd $NS3_HOME/source/ns-3-dce
 git init
