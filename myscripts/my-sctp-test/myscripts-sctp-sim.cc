@@ -157,20 +157,20 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 2; // NOTE: must be at least 2
+	int number_of_nodes = 5; // NOTE: must be at least 2
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
-	int transfer_data_start = 128; // Amount of bytes to send, starting value
-	int transfer_data_end = 16777216; // Amount of bytes to send, ending value
+	int transfer_data_start = 1024; // Amount of bytes to send, starting value
+	int transfer_data_end = 16384; // Amount of bytes to send, ending value
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
-	int number_of_streams = 1; // Number of sctp streams
+	int number_of_streams = 2; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
 	
 	int retransmission_timeout = 0;
 	int hb_interval = 0;	
 	
 	int i;
-	for(i = transfer_data_start; i <= transfer_data_end; i*=2) {
+	for(i = transfer_data_start; i <= transfer_data_end; i+=1024) {
 		run_simulation(number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 	}
 
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
 				size_t lastindex = filename.find_last_of("."); 
 				std::string filename_no_ext = filename.substr(0, lastindex); 
 				
-				start_data_parser("sctp", filename_no_ext, "simtotal", "-print");
+				start_data_parser("sctp", filename_no_ext, "simtotal", "-printall");
 			}
 			free(namelist[i]);
 		}

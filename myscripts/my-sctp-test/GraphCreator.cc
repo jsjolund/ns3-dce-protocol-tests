@@ -28,7 +28,7 @@ class GraphCreator {
 	public : void selectData();
 	public : int computeHeight();
 	public : int computeWidth();
-	public : int setSelectionVars(string);
+	public : int setSelectionVars(string, int);
 	public : void setGnuplotParams();
 	public : string GUI_line();
 };
@@ -42,8 +42,8 @@ GraphCreator::GraphCreator(string s) {
 	height = computeHeight();
 	width = computeWidth();
 	selectColumns();
-	colA = setSelectionVars(labelA);
-	colB = setSelectionVars(labelB);
+	colA = setSelectionVars(labelA, 1);
+	colB = setSelectionVars(labelB, 2);
 }
 
 string GraphCreator::GUI_line() {
@@ -60,15 +60,15 @@ void GraphCreator::selectColumns() {
 	cout << "Source file: " << filename << "\n";
 	cout << GUI_line() << "\n";
 	cout << left << setw(20) << "Available parameters:" << "\n";
-	cout << left << setw(20) << "Frame number";
-	cout << left << setw(20) << "Time";
-	cout << left << setw(20) << "Data with headers" << "\n";
-	cout << left << setw(20) << "Data no headers";
-	cout << left << setw(20) << "Data percentage";
-	cout << left << setw(20) << "Transmission speed" << "\n";
-	cout << left << setw(20) << "Frame size";
-	cout << left << setw(20) << "Data chunks";
-	cout << left << setw(20) << "Chunk size" << "\n";
+	cout << left << setw(20) << "[1] Frame number";
+	cout << left << setw(20) << "[2] Time";
+	cout << left << setw(20) << "[3] Data with headers" << "\n";
+	cout << left << setw(20) << "[4] Data no headers";
+	cout << left << setw(20) << "[5] Data percentage";
+	cout << left << setw(20) << "[6] Transmission speed" << "\n";
+	cout << left << setw(20) << "[7] Frame size";
+	cout << left << setw(20) << "[8] Data chunks";
+	cout << left << setw(20) << "[9] Chunk size" << "\n";
 	cout << GUI_line() << "\n";
 	cout << "Insert the first column of data that will be the x-axis : ";
 	getline(cin, labelA);
@@ -89,33 +89,87 @@ void GraphCreator::selectColumns() {
  * [9] Average size of data chunks (header not included)
  */
 
-int GraphCreator::setSelectionVars(string label) {
+int GraphCreator::setSelectionVars(string label, int labelID) {
 	int col;
-	if(label == "Frame number") {
+	if(label == "Frame number" || label == "1") {
+		if(labelID == 1) {
+			labelA = "Number of frames";
+		}
+		else {
+			labelB = "Number of frames";
+		}
 		col = 1;
 	}
-	else if(label == "Time") {
+	else if(label == "Time" || label == "2") {
+		if(labelID == 1) {
+			labelA = "Time [s]";
+		}
+		else {
+			labelB = "Time [s]";
+		}
 		col = 2;
 	}
-	else if(label == "Data with headers") {
+	else if(label == "Data with headers" || label == "3") {
+		if(labelID == 1) {
+			labelA = "Data with headers [bytes]";
+		}
+		else {
+			labelB = "Data with headers [bytes]";
+		}
 		col = 3;
 	}
-	else if(label == "Data no headers") {
+	else if(label == "Data no headers" || label == "4") {
+		if(labelID == 1) {
+			labelA = "Data no headers [bytes]";
+		}
+		else {
+			labelB = "Data no headers [bytes]";
+		}
 		col = 4;
 	}
-	else if(label == "Data percentage") {
+	else if(label == "Data percentage" || label == "5") {
+		if(labelID == 1) {
+			labelA = "Data percentage";
+		}
+		else {
+			labelB = "Data percentage";
+		}
 		col = 5;
 	}
-	else if(label == "Transmission speed") {
+	else if(label == "Transmission speed" || label == "6") {
+		if(labelID == 1) {
+			labelA = "Transmission speed [Mbytes/s]";
+		}
+		else {
+			labelB = "Transmission speed [Mbytes/s]";
+		}
 		col = 6;
 	}
-	else if(label == "Frame size") {
+	else if(label == "Frame size" || label == "7") {
+		if(labelID == 1) {
+			labelA = "Frame size [bytes]";
+		}
+		else {
+			labelB = "Frame size [bytes]";
+		}
 		col = 7;
 	}
-	else if(label == "Data chunks") {
+	else if(label == "Data chunks" || label == "8") {
+		if(labelID == 1) {
+			labelA = "Data chunks";
+		}
+		else {
+			labelB = "Data chunks";
+		}
 		col = 8;
 	}
-	else if (label == "Chunk size") {
+	else if (label == "Chunk size" || label == "9") {
+		if(labelID == 1) {
+			labelA = "Chunk size [bytes]";
+		}
+		else {
+			labelB = "Chunk size [bytes]";
+		}
 		col = 9;
 	}
 	else {
@@ -124,6 +178,7 @@ int GraphCreator::setSelectionVars(string label) {
 	}
 	return col;
 }
+
 
 //Method for computation of number of rows in the data (used for the creation of temporary array)
 int GraphCreator::computeHeight() {
@@ -247,7 +302,7 @@ void GraphCreator::selectData() {
 
 	//Open file for writing
 	ofstream writefile("graph_data.dat");
-	//Check if file is open
+	//Check if file is open0
 	if(writefile.is_open()) {
 		//Write to file
 		writefile << "# X Y \n";
@@ -280,10 +335,11 @@ const char* GraphCreator::getLabelY() {
 //Function for setting Gnuplot parameters
 void GraphCreator::setGnuplotParams() {
 	cout << "Setting Gnuplot parameters..." << "\n";
+	
 	//Set the boundaries for the graph
-	setenv("maxX", std::to_string(maxX+50).c_str(), true);
+	setenv("maxX", std::to_string(maxX*1.10).c_str(), true);
 	setenv("minX", std::to_string(0).c_str(), true);
-	setenv("maxY", std::to_string(maxY+50).c_str(), true);
+	setenv("maxY", std::to_string(maxY*1.10).c_str(), true);
 	setenv("minY", std::to_string(0).c_str(), true);
 	//Set the labels for the graph
 	setenv("LabelX", getLabelX(), true);
