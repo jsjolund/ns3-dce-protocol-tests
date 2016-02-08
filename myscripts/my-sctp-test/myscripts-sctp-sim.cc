@@ -17,7 +17,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include "DataParser.h"
-#include "GraphHandler.h"
 
 
 using std::string;	
@@ -66,7 +65,8 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 							+ "_" + to_string(now->tm_hour) 
 							+ "-" + to_string(now->tm_min) 
 							+ "-" + to_string(now->tm_sec)*/
-							+ to_string(clock()));
+							+ to_string(transfer_data)
+							+ "-" + to_string(clock()) + "_");
 
 	NS_LOG_UNCOND("Simulation started\nNumber of nodes: " + number_of_nodes_str 
 				+ "\nData rate: " + data_rate_str 
@@ -157,13 +157,13 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 5; // NOTE: must be at least 2
+	int number_of_nodes = 2; // NOTE: must be at least 2
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
-	int transfer_data_start = 256; // Amount of bytes to send, starting value
-	int transfer_data_end = 65536; // Amount of bytes to send, ending value
-	int time_to_live = 50; // Time to live of packets in milliseconds (0 == ttl disabled)
-	int number_of_streams = 2; // Number of sctp streams
+	int transfer_data_start = 128; // Amount of bytes to send, starting value
+	int transfer_data_end = 16777216; // Amount of bytes to send, ending value
+	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
+	int number_of_streams = 1; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
 	
 	int retransmission_timeout = 0;
@@ -181,13 +181,12 @@ int main(int argc, char *argv[]) {
 	else {
 		for (i = 0; i < num_files; i++) {
 			std::string filename = namelist[i]->d_name;
-			if(filename.substr(filename.find_last_of(".") + 1) == "pcap") {
+			if(filename.substr(filename.find_last_of("_") + 1) == "-0-0.pcap") {
 				// We found a pcap file, input it to graph handler
 				size_t lastindex = filename.find_last_of("."); 
 				std::string filename_no_ext = filename.substr(0, lastindex); 
-				std::string filename_sum = filename_no_ext + "_sum-file";
 				
-				start_graph_handler(filename_sum, filename_no_ext);
+				start_data_parser("sctp", filename_no_ext, "simtotal", "-print");
 			}
 			free(namelist[i]);
 		}

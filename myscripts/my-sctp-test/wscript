@@ -8,7 +8,7 @@ def configure(conf):
 def build(bld):
     bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point', 'csma', 'netanim'],
 				  target='bin/my-sctp-test',
-				  source=['DataParser.cc', 'GraphHandler.cc', 'myscripts-sctp-sim.cc'],)
+				  source=['DataParser.cc', 'myscripts-sctp-sim.cc'],)
 
 
     bld.program(source='my-sctp-server.cc', target='../../bin_dce/my-sctp-server',
