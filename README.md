@@ -10,7 +10,7 @@ apt-get install gcc g++ python python-dev qt4-dev-tools libqt4-dev mercurial bzr
                 flex bison libfl-dev tcpdump sqlite sqlite3 libsqlite3-dev libxml2 \
                 libxml2-dev libgtk2.0-0 libgtk2.0-dev vtun lxc doxygen graphviz imagemagick \
                 git python-pygraphviz python-pygoocanvas libpcap-dev libdb-dev libssl-dev \
-                lksctp-tools libsctp-dev tshark
+                lksctp-tools libsctp-dev tshark gnuplot
 ```
 Optional: ```apt-get install python-pygccxml```, but having it installed may cause build errors...
 
