@@ -114,6 +114,7 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 
 	// Server output pcap: myscripts-sctp-sim-0-0.pcap
 	// Terminal output, run: cat files-0/var/log/*/stdout
+	//process.SetBinary("my-tcp-server");
 	process.SetBinary("my-sctp-server");
 	process.ResetArguments();
 
@@ -130,6 +131,7 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 	// Clients output pcap: myscripts-sctp-sim-i-0.pcap
 	// Terminal output, run: cat files-1/var/log/*/stdout
 	for(int i = 1; i < number_of_nodes; i++) {
+		//process.SetBinary("my-tcp-client");
 		process.SetBinary("my-sctp-client");
 		process.ResetArguments();
 		process.ParseArguments("10.0.0.1");
@@ -181,6 +183,7 @@ int main(int argc, char *argv[]) {
 	else {
 		for (i = 0; i < num_files; i++) {
 			std::string filename = namelist[i]->d_name;
+			// Parse only the server pcap files
 			if(filename.substr(filename.find_last_of("_") + 1) == "-0-0.pcap") {
 				// We found a pcap file, input it to graph handler
 				size_t lastindex = filename.find_last_of("."); 
