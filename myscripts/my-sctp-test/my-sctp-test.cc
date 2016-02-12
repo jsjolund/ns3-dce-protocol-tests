@@ -28,9 +28,13 @@ template<typename T> std::string to_string(T value) {
 	return os.str();
 }
 
-enum Protocol {
-	SCTP, TCP
-};
+enum Protocol {	SCTP, TCP };
+static const char * PNames[] = { "sctp", "tcp" };
+static const char * PSenders[] = { "my-sctp-sender", "my-tcp-sender" };
+static const char * PReceivers[] = { "my-sctp-receiver", "my-tcp-receiver" };
+const char * getNameForProtocol( int p ) { return PNames[p]; }
+const char * getSenderForProtocol( int p ) { return PSenders[p]; }
+const char * getReceiverForProtocol( int p ) { return PReceivers[p]; }
 
 using namespace ns3;
 
@@ -57,12 +61,12 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 	std::string time_to_live_str = to_string(time_to_live);
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
-	std::string protocol_name = (protocol == SCTP) ? "sctp" : "tcp";
-	std::string output_filename = ("sim-" + protocol_name + "-" + to_string(transfer_data) + "-" + to_string(clock())
+	std::string protocol_name_str = to_string(getNameForProtocol(protocol));
+	std::string output_filename = ("sim-" + protocol_name_str + "-" + transfer_data_str + "-" + to_string(clock())
 			+ "_");
 
 	NS_LOG_UNCOND(
-			"Simulation started\nProtocol:" + protocol_name + "\nNumber of nodes: " + number_of_nodes_str
+			"Simulation started\nProtocol:" + protocol_name_str + "\nNumber of nodes: " + number_of_nodes_str
 					+ "\nData rate: " + data_rate_str + " Mbps\nData delay: " + data_delay_str
 					+ " ms\nNumber of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str
 					+ "\nNumber of streams: " + number_of_streams_str + "\n");
@@ -106,11 +110,7 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 
 	// Server output pcap: sim-[protocol]-[size]-[clock]_-0-0.pcap
 	// Terminal output, run: cat files-0/var/log/*/stdout
-	if (protocol == SCTP) {
-		process.SetBinary("my-sctp-receiver");
-	} else {
-		process.SetBinary("my-tcp-receiver");
-	}
+	process.SetBinary(getReceiverForProtocol(protocol));
 	process.ResetArguments();
 	process.SetStackSize(1 << 16);
 	apps = process.Install(nodes.Get(0));
@@ -120,11 +120,7 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 	// Clients output pcap: sim-[protocol]-[size]-[clock]_-[i]-0.pcap
 	// Terminal output, run: cat files-i/var/log/*/stdout
 	for (int i = 1; i < number_of_nodes; i++) {
-		if (protocol == SCTP) {
-			process.SetBinary("my-sctp-sender");
-		} else {
-			process.SetBinary("my-tcp-sender");
-		}
+		process.SetBinary(getSenderForProtocol(protocol));
 		process.ResetArguments();
 		process.AddArguments("-a", "10.0.0.1");
 		process.AddArguments("-d", transfer_data_str); // amount of data per stream in bytes
@@ -156,7 +152,7 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 5; // NOTE: must be at least 2
+	int number_of_nodes = 5; // NOTE: must be at least 2, one server, one client
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 1024; // Amount of bytes to send, starting value
@@ -165,8 +161,8 @@ int main(int argc, char *argv[]) {
 	int number_of_streams = 5; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
 
-	int retransmission_timeout = 0;
-	int hb_interval = 0;
+	int retransmission_timeout = 0; // TODO
+	int hb_interval = 0; // TODO
 
 	int i;
 	for (i = transfer_data_start; i <= transfer_data_end; i += 1024) {
