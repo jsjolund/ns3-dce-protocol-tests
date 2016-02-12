@@ -6,15 +6,27 @@ def configure(conf):
     ns3waf.check_modules(conf, ['core', 'network', 'dce', 'point-to-point', 'netanim'], mandatory = True)
 
 def build(bld):
-    bld.build_a_script('dce', needed = ['core', 'network', 'dce', 'point-to-point', 'csma', 'netanim'],
+    bld.build_a_script('dce',
+				  needed = ['core', 'network', 'dce', 'point-to-point', 'csma', 'netanim'],
 				  target='bin/my-sctp-test',
-				  source=['DataParser.cc', 'myscripts-sctp-sim.cc'],)
+				  source=['DataParser.cc', 'my-sctp-test.cc'],)
 
-
-    bld.program(source='my-sctp-server.cc', target='../../bin_dce/my-sctp-server',
+    bld.program(source='my-sctp-receiver.cc',
+                target='../../bin_dce/my-sctp-receiver',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='my-sctp-client.cc', target='../../bin_dce/my-sctp-client',
+    bld.program(source='my-sctp-sender.cc',
+                target='../../bin_dce/my-sctp-sender',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
+
+    bld.program(source='my-tcp-receiver.cc',
+                target='../../bin_dce/my-tcp-receiver',
+                cxxflags = [ '-fPIC'], 
+                linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+
+    bld.program(source='my-tcp-sender.cc', 
+                target='../../bin_dce/my-tcp-sender',
+                cxxflags = [ '-fPIC'], 
+                linkflags = ['-lstdc++', '-pie', '-rdynamic'])

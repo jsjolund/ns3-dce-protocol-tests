@@ -70,7 +70,6 @@ int main(int argc, char **argv) {
 	while (1) {
 		stat = sctp_recvmsg(connect_sock, (void *) buffer, sizeof(buffer), 
 				(struct sockaddr *) NULL, 0, &s_sndrcvinfo, &flags);
-		printf("client stat = %i\n", stat);
 	}
 	/* Close our socket and exit */
 	close(connect_sock);

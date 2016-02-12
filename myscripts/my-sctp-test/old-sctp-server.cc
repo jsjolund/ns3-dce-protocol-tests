@@ -23,7 +23,6 @@ void send_chars(int sock, int to_stream, int ttl, int flags, int num_chars) {
 	int buffer_size = 1023;
 	char buffer[buffer_size + 1];
 
-	printf("new chars\n");
 	// Loop over characters to send
 	for (char_i = 0; char_i < num_chars; char_i++) {
 		int content_i = char_i % (content_size-1);
@@ -36,7 +35,6 @@ void send_chars(int sock, int to_stream, int ttl, int flags, int num_chars) {
 			buffer[buffer_i + 1] = '\0';
 			// The buffer is full, or we put in the required number of characters, so send
 			stat = sctp_sendmsg(sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, to_stream, ttl, 0);	
-			printf("num_chars=%d stat %d\n", num_chars, stat);
 		}
 	}
 }

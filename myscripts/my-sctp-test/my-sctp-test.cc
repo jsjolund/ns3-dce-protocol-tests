@@ -114,34 +114,35 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 
 	// Server output pcap: myscripts-sctp-sim-0-0.pcap
 	// Terminal output, run: cat files-0/var/log/*/stdout
-	//process.SetBinary("my-tcp-server");
-	process.SetBinary("my-sctp-server");
+	
+	//process.SetBinary("my-tcp-receiver");
+	process.SetBinary("my-sctp-receiver");
 	process.ResetArguments();
-
-	process.AddArguments("-d", transfer_data_str); // amount of data per stream in bytes
-	process.AddArguments("-t", time_to_live_str); // packets time to live in milliseconds (0 == ttl disabled)
-	//process.AddArguments("-f", "bible.txt"); // file to send
-	process.AddArguments("-u", unordered_str); // un-ordered delivery of data
-	process.AddArguments("-s", number_of_streams_str); // number of streams
-
-	process.SetStackSize(1 << 16);
+		process.SetStackSize(1 << 16);
 	apps = process.Install(nodes.Get(0));
+
 	apps.Start(Seconds(1.0));
 
 	// Clients output pcap: myscripts-sctp-sim-i-0.pcap
 	// Terminal output, run: cat files-1/var/log/*/stdout
 	for(int i = 1; i < number_of_nodes; i++) {
-		//process.SetBinary("my-tcp-client");
-		process.SetBinary("my-sctp-client");
+		//process.SetBinary("my-tcp-sender");
+		process.SetBinary("my-sctp-sender");
 		process.ResetArguments();
-		process.ParseArguments("10.0.0.1");
+		process.AddArguments("-a", "10.0.0.1");
+		process.AddArguments("-d", transfer_data_str); // amount of data per stream in bytes
+		process.AddArguments("-t", time_to_live_str); // packets time to live in milliseconds (0 == ttl disabled)
+		//process.AddArguments("-f", "bible.txt"); // TODO: this file needs to be copied to each client's files-* folder.
+		process.AddArguments("-u", unordered_str); // un-ordered delivery of data
+		process.AddArguments("-s", number_of_streams_str); // number of streams
+		process.SetStackSize(1 << 16);
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(1.5));
 		
 		AnimationInterface::SetConstantPosition (nodes.Get (i), 10*(i-1), 10);
 	}
 	// Setup NetAnim tracing
-	AnimationInterface::SetConstantPosition (nodes.Get (0), ((double)number_of_nodes-2)*0.5*10.0, 0);
+	AnimationInterface::SetConstantPosition (nodes.Get (0), ((double)number_of_nodes-2)*5.0, 0);
 	AnimationInterface anim (timestamp + "-netanim.xml");
 	anim.EnableIpv4L3ProtocolCounters (Seconds (0), sim_stop_time);
 	anim.EnableQueueCounters (Seconds (0), sim_stop_time);
@@ -159,13 +160,13 @@ int run_simulation(int number_of_nodes, int data_rate, int data_delay,
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 5; // NOTE: must be at least 2
+	int number_of_nodes = 2; // NOTE: must be at least 2
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 1024; // Amount of bytes to send, starting value
 	int transfer_data_end = 16384; // Amount of bytes to send, ending value
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
-	int number_of_streams = 2; // Number of sctp streams
+	int number_of_streams = 1; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
 	
 	int retransmission_timeout = 0;
