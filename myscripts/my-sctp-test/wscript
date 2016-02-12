@@ -11,22 +11,22 @@ def build(bld):
 				  target='bin/my-sctp-test',
 				  source=['DataParser.cc', 'my-sctp-test.cc'],)
 
-    bld.program(source='my-sctp-receiver.cc',
+    bld.program(source='SenderContent.cc my-sctp-receiver.cc',
                 target='../../bin_dce/my-sctp-receiver',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='my-sctp-sender.cc',
+    bld.program(source='SenderContent.cc my-sctp-sender.cc',
                 target='../../bin_dce/my-sctp-sender',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='my-tcp-receiver.cc',
+    bld.program(source='SenderContent.cc my-tcp-receiver.cc',
                 target='../../bin_dce/my-tcp-receiver',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='my-tcp-sender.cc', 
+    bld.program(source='SenderContent.cc my-tcp-sender.cc', 
                 target='../../bin_dce/my-tcp-sender',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lstdc++', '-pie', '-rdynamic'])

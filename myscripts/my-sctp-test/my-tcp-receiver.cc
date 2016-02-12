@@ -4,53 +4,38 @@
 #include <netdb.h>
 #include <string.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h> 
 
-#define SERVER_PORT 2000
+#define SERVER_PORT 3007
 
 int main(int argc, char *argv[]) {
-	int sock;
-	sock = socket(PF_INET, SOCK_STREAM, 0);
-
+	int status, sock, sock_accept;
 	struct sockaddr_in addr;
+	char buffer[1024];
+
+	// Create a socket
+	sock = socket(PF_INET, SOCK_STREAM, 0);
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(SERVER_PORT);
 	addr.sin_addr.s_addr = INADDR_ANY;
-
-	int status;
 	status = bind(sock, (const struct sockaddr *) &addr, sizeof(addr));
-	status = listen(sock, 1);
-
-	int fd = accept(sock, 0, 0);
-	std::cout << " accept -> " << fd << std::endl;
-
-	uint8_t buf[10240];
-
-	memset(buf, 0, 10240);
-	ssize_t tot = 0;
-
-	for (uint32_t i = 0; i < 100; i++) {
-		ssize_t n = 10240;
-		while (n > 0) {
-			ssize_t bytes_read = read(fd, &buf[10240 - n], n);
-
-			if (bytes_read > 0) {
-				n -= bytes_read;
-
-				std::cout << "read:" << bytes_read << " n:" << n << std::endl;
-
-				tot += bytes_read;
-			} else {
-				break;
-			}
-
-		}
-		//   sleep (1);
+	if (status < 0) {
+		perror("TCP socket bind error\n");
+		exit(-1);
 	}
-
-	std::cout << "did read all buffers tot:" << tot << std::endl;
-
+	status = listen(sock, 1);
+	if (status < 0) {
+		perror("TCP listen error\n");
+		exit(-1);
+	}
+	// Listen for incoming transmissions
+	while (1) {
+		printf("TCP server accepting\n");
+		sock_accept = accept(sock, 0, 0);
+		status = read(sock_accept, (void *) buffer, sizeof(buffer));
+	}
 	close(sock);
-	close(fd);
-
+	close(sock_accept);
 	return 0;
 }
