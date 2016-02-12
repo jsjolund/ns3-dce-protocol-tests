@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,10 +10,6 @@
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 
-#include <iostream>
-#include <fstream>
-#include <string>
-
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -19,18 +17,19 @@ int main(int argc, char **argv) {
 	int sock_listen, sock_server, stat, i;
 	struct sockaddr_in server_addr;
 	struct sctp_initmsg s_initmsg;
-	int echo_port = 3007;
+	int port = 3007;
 	struct sctp_sndrcvinfo s_sndrcvinfo;
 	char buffer[1024];
-	
+
 	sock_listen = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port = htons(echo_port);
+	server_addr.sin_port = htons(port);
 
-	stat = bind(sock_listen, (struct sockaddr *) &server_addr, sizeof(server_addr));
+	stat = bind(sock_listen, (struct sockaddr *) &server_addr,
+			sizeof(server_addr));
 
 	// SCTP parameter
 	memset(&s_initmsg, 0, sizeof(s_initmsg));
@@ -38,9 +37,10 @@ int main(int argc, char **argv) {
 	s_initmsg.sinit_max_instreams = MAX_STREAMS;
 	s_initmsg.sinit_max_attempts = MAX_STREAMS;
 
-	stat = setsockopt(sock_listen, IPPROTO_SCTP, SCTP_INITMSG, &s_initmsg, sizeof(s_initmsg));
+	stat = setsockopt(sock_listen, IPPROTO_SCTP, SCTP_INITMSG, &s_initmsg,
+			sizeof(s_initmsg));
 	if (stat < 0) {
-		perror("Socket Option error");
+		perror("setsockopt error\n");
 		exit(-1);
 	}
 
@@ -48,8 +48,9 @@ int main(int argc, char **argv) {
 
 	while (1) {
 		printf("SCTP server accepting\n");
-		sock_server = accept(sock_listen, (struct sockaddr *) NULL, (socklen_t *) NULL);
-		stat = sctp_recvmsg(sock_server, (void *) buffer, sizeof(buffer), 
+		sock_server = accept(sock_listen, (struct sockaddr *) NULL,
+				(socklen_t *) NULL);
+		stat = sctp_recvmsg(sock_server, (void *) buffer, sizeof(buffer),
 				(struct sockaddr *) NULL, 0, &s_sndrcvinfo, 0);
 	}
 
