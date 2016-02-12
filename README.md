@@ -15,8 +15,8 @@ apt-get install gcc g++ python python-dev qt4-dev-tools libqt4-dev mercurial bzr
 Optional: ```apt-get install python-pygccxml```, but having it installed may cause build errors...
 
 ###Building
-[Build DCE advanced mode  (with Linux kernel)](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-advanced-mode-with-linux-kernel).
-If you get a bulid error about compiler problems, add ```compiler-gcc5.h``` to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
+[Install the Bake build tool](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-basic-mode), then [build DCE advanced mode  (with Linux kernel)](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-advanced-mode-with-linux-kernel).
+If you get a bulid error about compiler problems, add [compiler-gcc5.h](compiler-gcc5.h) to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
 
 ###Downloading the project
 Assuming the NS-3 DCE installation directory
