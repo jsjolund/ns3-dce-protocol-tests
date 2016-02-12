@@ -15,13 +15,13 @@ apt-get install gcc g++ python python-dev qt4-dev-tools libqt4-dev mercurial bzr
 Optional: ```apt-get install python-pygccxml```, but having it installed may cause build errors...
 
 ###Building
-[Build DCE advanced mode  (with Linux kernel)](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-advanced-mode-with-linux-kernel).
-If you get a bulid error about compiler problems, add ```compiler-gcc5.h``` to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
+[Install the Bake build tool](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-basic-mode), then [build DCE advanced mode  (with Linux kernel)](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-advanced-mode-with-linux-kernel).
+If you get a bulid error about compiler problems, add [compiler-gcc5.h](compiler-gcc5.h) to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
 
 ###Downloading the project
-Assuming the NS3 DCE installation directory
+Assuming the NS-3 DCE installation directory
 ```
-NS3_HOME="$HOME/ns3-dce-linux"
+export NS3_HOME="$HOME/dce"
 ```
 ```
 cd $NS3_HOME/source/ns-3-dce
@@ -37,4 +37,17 @@ git checkout -t origin/master
                 --enable-kernel-stack=$NS3_HOME/source/net-next-sim-2.6.36/arch
 ./waf build
 ./waf --run "my-sctp-test"
+```
+
+###Useful commands
+Output from the ```DceApplicationHelper``` processes, i.e. the SCTP server and client programs, are stored in the folders ```$NS3_HOME/source/ns-3-dce/files-*``` where the star is the NS-3 ```NodeContainer``` id number.
+
+To print what was written to standard output with e.g. ```printf("debug output")``` run
+```
+cd $NS3_HOME/source/ns-3-dce
+find files-* -name 'stdout' -exec cat {} \;
+```
+Searching for all lines from standard output which contain the word "debug" can be done with
+```
+find files-* -name 'stdout' -exec grep 'debug' {} \;
 ```
