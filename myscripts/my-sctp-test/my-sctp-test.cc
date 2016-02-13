@@ -16,6 +16,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <math.h>
+
 #include "DataParser.h"
 
 using std::string;
@@ -28,13 +30,21 @@ template<typename T> std::string to_string(T value) {
 	return os.str();
 }
 
-enum Protocol {	SCTP, TCP };
+enum Protocol {
+	SCTP, TCP
+};
 static const char * PNames[] = { "sctp", "tcp" };
 static const char * PSenders[] = { "my-sctp-sender", "my-tcp-sender" };
 static const char * PReceivers[] = { "my-sctp-receiver", "my-tcp-receiver" };
-const char * getNameForProtocol( int p ) { return PNames[p]; }
-const char * getSenderForProtocol( int p ) { return PSenders[p]; }
-const char * getReceiverForProtocol( int p ) { return PReceivers[p]; }
+const char * getNameForProtocol(int p) {
+	return PNames[p];
+}
+const char * getSenderForProtocol(int p) {
+	return PSenders[p];
+}
+const char * getReceiverForProtocol(int p) {
+	return PReceivers[p];
+}
 
 using namespace ns3;
 
@@ -62,8 +72,8 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
 	std::string protocol_name_str = to_string(getNameForProtocol(protocol));
-	std::string output_filename = ("sim-" + protocol_name_str + "-" + transfer_data_str + "-" + to_string(clock())
-			+ "_");
+	std::string output_filename =
+			("sim-" + protocol_name_str + "-" + transfer_data_str + "-" + to_string(clock()) + "_");
 
 	NS_LOG_UNCOND(
 			"Simulation started\nProtocol:" + protocol_name_str + "\nNumber of nodes: " + number_of_nodes_str
@@ -131,7 +141,9 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(1.5));
 
-		AnimationInterface::SetConstantPosition(nodes.Get(i), 10 * (i - 1), 10);
+		float x = 10 * (i - 1);
+		float y = 40 * sin(3.14 * ((float) i - 1) / ((float) number_of_nodes - 2));
+		AnimationInterface::SetConstantPosition(nodes.Get(i), x, y);
 	}
 	// Setup NetAnim tracing
 	AnimationInterface::SetConstantPosition(nodes.Get(0), ((double) number_of_nodes - 2) * 5.0, 0);
@@ -152,7 +164,7 @@ int run_simulation(Protocol protocol, int number_of_nodes, int data_rate, int da
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 5; // NOTE: must be at least 2, one server, one client
+	int number_of_nodes = 10; // NOTE: must be at least 2, one server, one client
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 1024; // Amount of bytes to send, starting value
@@ -169,7 +181,7 @@ int main(int argc, char *argv[]) {
 		run_simulation(SCTP, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 		run_simulation(TCP, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 	}
-
+	exit(0);
 	// Loop over all pcap files in current directory
 	struct dirent **namelist;
 	int num_files = scandir(".", &namelist, 0, alphasort);

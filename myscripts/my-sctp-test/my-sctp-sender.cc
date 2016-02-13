@@ -14,29 +14,21 @@
 #include "SenderContent.h"
 
 #define SERVER_PORT 3007
+#define MAX_STREAMS 512
+#define MAX_ATTEMPTS 1024
 
 using namespace std;
 
-void send_chars(int sock, int num_streams, int ttl, int flags, int num_chars) {
-	int stat;
-	int stream_i = 0;
-	SenderContent content(num_chars);
-	int buffer_size = 1025;
-	char buffer[buffer_size];
-	while (content.fill(buffer, buffer_size)) {
-		stat = sctp_sendmsg(sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, stream_i, ttl, 0);
-		stream_i = (stream_i + 1) % num_streams;
-	}
-}
-
 int main(int argc, char **argv) {
-
-	const int MAX_STREAMS = 512;
-	int sock_server, connect_sock, stat, slen, i;
+	int sock_server, connect_sock, stat, i, slen;
 	struct sctp_initmsg initmsg;
 	struct sockaddr_in server_addr;
 	struct sctp_event_subscribe s_events;
 	struct sctp_status s_status;
+
+	// Last buffer byte holds null terminator to give 1024 data size in packet.
+	int buffer_size = 1025;
+	char buffer[buffer_size];
 
 	// Parse input arguments 
 	unsigned int bytes_to_transfer = 0;
@@ -70,50 +62,47 @@ int main(int argc, char **argv) {
 	// Create a socket
 	connect_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
 
-	// SCTP parameters
+	// SCTP socket parameters. TODO: These should be sent as function parameters probably
 	memset(&initmsg, 0, sizeof(initmsg));
-	// TODO: These should be sent as function parameters probably
-	initmsg.sinit_num_ostreams = MAX_STREAMS;         // Number of Output Stream
-	initmsg.sinit_max_instreams = MAX_STREAMS;      // Number of Input Stream
-	initmsg.sinit_max_attempts = MAX_STREAMS;
-	stat = setsockopt(connect_sock, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg));
-	if (stat < 0) {
-		perror("setsockopt error\n");
-		exit(-1);
+	initmsg.sinit_num_ostreams = MAX_STREAMS;
+	initmsg.sinit_max_instreams = MAX_STREAMS;
+	initmsg.sinit_max_attempts = MAX_ATTEMPTS;
+	if (setsockopt(connect_sock, IPPROTO_SCTP, SCTP_INITMSG, &initmsg, sizeof(initmsg)) < 0) {
+		perror("SCTP: Setsockopt failed\n");
+		exit(EXIT_FAILURE);
 	}
-
-	// Cnnect to server IP
+	// Connect to server IP
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(SERVER_PORT);
 	server_addr.sin_addr.s_addr = inet_addr(receiver_ip);
-	stat = connect(connect_sock, (struct sockaddr *) &server_addr, sizeof(server_addr));
-	if (stat < 0) {
-		perror("connect error\n");
-		exit(-1);
+	if (connect(connect_sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+		perror("SCTP: Connect failed\n");
+		exit(EXIT_FAILURE);
 	}
-
+	// SCTP socket parameters
 	memset(&s_events, 0, sizeof(s_events));
 	s_events.sctp_data_io_event = 1;
-
-	stat = setsockopt(connect_sock, SOL_SCTP, SCTP_EVENTS, (const void *) &s_events, 9);
-	if (stat < 0) {
-		perror("event error\n");
-		exit(-1);
+	if (setsockopt(connect_sock, SOL_SCTP, SCTP_EVENTS, (const void *) &s_events, 9) < 0) {
+		perror("SCTP: Event error\n");
+		exit(EXIT_FAILURE);
 	}
-
-	slen = sizeof(s_status);
-	stat = getsockopt(connect_sock, SOL_SCTP, SCTP_STATUS, (void *) &s_status, (socklen_t *) &slen);
-
+	// Print SCTP connection status
+	int s_status_len = sizeof(s_status);
+	getsockopt(connect_sock, SOL_SCTP, SCTP_STATUS, (void *) &s_status, (socklen_t *) &s_status_len);
 	printf("assoc id  = %d\n", s_status.sstat_assoc_id);
 	printf("state     = %d\n", s_status.sstat_state);
 	printf("instrms   = %d\n", s_status.sstat_instrms);
 	printf("outstrms  = %d\n", s_status.sstat_outstrms);
 
-	send_chars(connect_sock, num_streams, ttl, flags, bytes_to_transfer);
-
+	// Send the specified amount of characters, distribute them by 1024 bytes on each stream
+	int stream_i = 0;
+	SenderContent content(bytes_to_transfer);
+	while (content.fill(buffer, buffer_size)) {
+		sctp_sendmsg(connect_sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, stream_i, ttl, 0);
+		stream_i = (stream_i + 1) % num_streams;
+	}
 	close(connect_sock);
-
 	return 0;
 
 }

@@ -13,25 +13,15 @@
 
 using namespace std;
 
-/**
- * Send the specified amount of characters to this socket.
- * @param sock The socket to send to.
- * @param num_chars Number of characters (bytes) to send.
- */
-void send_chars(int sock, int num_chars) {
-	int stat;
-	SenderContent content(num_chars);
-	int buffer_size = 1025;
-	char buffer[buffer_size];
-	while (content.fill(buffer, buffer_size)) {
-		stat = send(sock, buffer, (size_t) strlen(buffer), 0);
-	}
-}
-
 int main(int argc, char *argv[]) {
 	struct hostent *host;
-	struct sockaddr_in addr;
-	int connect_sock, i, status;
+	struct sockaddr_in address;
+	int master_socket, i, status;
+
+	// Last buffer byte holds null terminator to give 1024 data size in packet.
+	int buffer_size = 1025;
+	char buffer[buffer_size];
+
 	unsigned int bytes_to_transfer = 0;
 	char* receiver_ip = (char *) "\0";
 
@@ -49,18 +39,20 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	// Create a socket and connect to server IP
-	connect_sock = socket(PF_INET, SOCK_STREAM, 0);
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(SERVER_PORT);
+	master_socket = socket(PF_INET, SOCK_STREAM, 0);
+	address.sin_family = AF_INET;
+	address.sin_port = htons(SERVER_PORT);
 	host = gethostbyname(receiver_ip);
-	memcpy(&addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-	status = connect(connect_sock, (const struct sockaddr *) &addr, sizeof(addr));
-	if (status < 0) {
-		perror("TCP connect error\n");
-		exit(-1);
+	memcpy(&address.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+	if (connect(master_socket, (const struct sockaddr *) &address, sizeof(address)) < 0) {
+		perror("TCP: Connect failed\n");
+		exit(EXIT_FAILURE);
 	}
 	// Send the specified amount of characters
-	send_chars(connect_sock, bytes_to_transfer);
-	close(connect_sock);
+	SenderContent content(bytes_to_transfer);
+	while (content.fill(buffer, buffer_size)) {
+		send(master_socket, buffer, (size_t) strlen(buffer), 0);
+	}
+	close(master_socket);
 	return 0;
 }
