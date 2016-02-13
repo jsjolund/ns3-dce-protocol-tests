@@ -8,25 +8,25 @@ def configure(conf):
 def build(bld):
     bld.build_a_script('dce',
 				  needed = ['core', 'network', 'dce', 'point-to-point', 'csma', 'netanim'],
-				  target='bin/my-sctp-test',
-				  source=['DataParser.cc', 'my-sctp-test.cc'],)
+				  target='bin/my-simulator',
+				  source=['DataParser.cc', 'my-simulator.cc'],)
 
-    bld.program(source='SenderContent.cc my-sctp-receiver.cc',
-                target='../../bin_dce/my-sctp-receiver',
+    bld.program(source='dce-server-sctp.cc',
+                target='../../bin_dce/dce-server-sctp',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='SenderContent.cc my-sctp-sender.cc',
-                target='../../bin_dce/my-sctp-sender',
+    bld.program(source='SenderContent.cc dce-client-sctp.cc',
+                target='../../bin_dce/dce-client-sctp',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='SenderContent.cc my-tcp-receiver.cc',
-                target='../../bin_dce/my-tcp-receiver',
+    bld.program(source='dce-server-tcp.cc',
+                target='../../bin_dce/dce-server-tcp',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='SenderContent.cc my-tcp-sender.cc', 
-                target='../../bin_dce/my-tcp-sender',
+    bld.program(source='SenderContent.cc dce-client-tcp.cc', 
+                target='../../bin_dce/dce-client-tcp',
                 cxxflags = [ '-fPIC'], 
                 linkflags = ['-lstdc++', '-pie', '-rdynamic'])
