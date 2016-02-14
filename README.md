@@ -19,7 +19,7 @@ Optional: ```apt-get install python-pygccxml```, but having it installed may cau
 If you get a bulid error about compiler problems, add [compiler-gcc5.h](compiler-gcc5.h) to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
 
 ###Required system settings
-Most Linux systems place restrictions on how many user processes can be run at the same time. This project needs to run multiple NS-3 simulation instances in order to generate useful network statistics, which creates a lot of processes. Therefore it is necessary to appen the following lines to the end of ``` /etc/security/limits.conf```:
+Most Linux systems place restrictions on how many user processes can be run at the same time. This project needs to run multiple NS-3 simulation instances in order to generate useful network statistics, which creates a lot of processes. Therefore it is necessary to append the following lines to the end of ```/etc/security/limits.conf```:
 ```
 *         hard    nproc     65536
 *         soft    nproc      65536
