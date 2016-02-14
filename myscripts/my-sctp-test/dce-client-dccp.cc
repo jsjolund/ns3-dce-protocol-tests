@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
 	}
 	// Create a socket and connect to server IP
 	master_socket = socket(PF_INET, SOCK_DCCP, IPPROTO_DCCP);
-	//~ int on = 1;
-	//~ int result = setsockopt(master_socket, SOL_DCCP, SO_REUSEADDR, (const char *) &on, sizeof(on));
+	int on = 1;
+	int result = setsockopt(master_socket, SOL_DCCP, SO_REUSEADDR, (const char *) &on, sizeof(on));
 	address.sin_family = AF_INET;
 	address.sin_port = htons(SERVER_PORT);
 	host = gethostbyname(receiver_ip);
@@ -59,9 +59,9 @@ int main(int argc, char *argv[]) {
 	// Send the specified amount of characters
 	SenderContent content(bytes_to_transfer);
 	while (content.fill(buffer, buffer_size)) {
-		do {
+		//~ do {
 			status = send(master_socket, buffer, (size_t) strlen(buffer), 0);
-		} while ((status < 0) && (errno == EAGAIN));
+		//~ } while ((status < 0) && (errno == EAGAIN));
 	}
 	close(master_socket);
 	return 0;

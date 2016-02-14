@@ -171,11 +171,11 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 5; // NOTE: must be at least 2, one server, one client
+	int number_of_nodes = 2; // NOTE: must be at least 2, one server, one client
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
 	int transfer_data_start = 1024; // Amount of bytes to send, starting value
-	int transfer_data_end = 16384; // Amount of bytes to send, ending value
+	int transfer_data_end = 1024*3; // Amount of bytes to send, ending value
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
 	int number_of_streams = 5; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
@@ -186,20 +186,19 @@ int main(int argc, char *argv[]) {
 	const char* output_dir = "my-simulator-output/";
 
 	// Clear output directory if it exists
-	std::string command = "rm -rf ";
-	command.append(output_dir);
+	std::string command = "rm -rf " + std::string(output_dir);
 	system(command.c_str());
-	system("rm -rf files-*");
 	mkdir(output_dir, 0750);
+	// Clear DCE file system
+	system("rm -rf files-*");
 
 	// Run the simulation
 	int i, j;
 	for (i = transfer_data_start; i <= transfer_data_end; i += 1024) {
-		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams,
-				unordered);
-		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams,
-				unordered);
-		//~ run_simulation(DCCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+		run_simulation(DCCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+	
 	}
 	// Loop over all pcap files in current directory
 	struct dirent **namelist;

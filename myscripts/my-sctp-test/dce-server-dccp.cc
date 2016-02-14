@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons( SERVER_PORT);
 
-	//~ int on = 1;
-	//~ int result = setsockopt(master_socket, SOL_DCCP, SO_REUSEADDR, (const char *) &on, sizeof(on));
+	int on = 1;
+	int result = setsockopt(master_socket, SOL_DCCP, SO_REUSEADDR, (const char *) &on, sizeof(on));
 
 	// Bind and listen to master socket, allow 5 pending connections
 	if (bind(master_socket, (struct sockaddr *) &address, sizeof(address)) < 0) {
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 			if (FD_ISSET(sd, &readfds)) {
 				getpeername(sd, (struct sockaddr*) &address, (socklen_t*) &address);
 				// Check if it was for closing , and also read the incoming message
-				bytes_read = read(sd, buffer, sizeof(buffer));
+				bytes_read = recv(sd, buffer, sizeof(buffer), 0);
 				if (bytes_read == 0) {
 					printf("DCCP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr),
 							ntohs(address.sin_port), client_reads[i]);

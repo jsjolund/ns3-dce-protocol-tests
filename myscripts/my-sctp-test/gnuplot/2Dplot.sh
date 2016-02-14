@@ -2,15 +2,14 @@
 
 gnuplot <<- EOF
 	set term png
-	set output 'data.png'
+	set output '$output'
 	set xlabel '$LabelX'
 	set ylabel '$LabelY'
 	set grid
 	set key above
-	set xrange [$minX : $maxX]
-	set yrange [$minY : $maxY]
-	plot 'graph_data.dat'
+
+	$action
 EOF
 
-display 'data.png'
+display $output
 #clear
