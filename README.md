@@ -39,6 +39,13 @@ git checkout -t origin/master
 ./waf --run "my-simulator"
 ```
 
+###Plotting
+The plotting program is separate from the simulation. To plot the results from a simulation, run:
+```
+cd $NS3_HOME/source/ns-3-dce/build/myscripts/my-sctp-test/bin/
+./NSplot output.png ../../../../my-simulator-output/*.dat -2d
+```
+
 ###Useful commands
 Output from the ```DceApplicationHelper``` processes, i.e. the SCTP server and client programs, are stored in the folders ```$NS3_HOME/source/ns-3-dce/files-*``` where the star is the NS-3 ```NodeContainer``` id number.
 
