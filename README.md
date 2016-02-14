@@ -36,7 +36,7 @@ git checkout -t origin/master
 ./waf configure --with-ns3=$NS3_HOME/build --prefix=$NS3_HOME/build \
                 --enable-kernel-stack=$NS3_HOME/source/net-next-sim-2.6.36/arch
 ./waf build
-./waf --run "my-sctp-test"
+./waf --run "my-simulator"
 ```
 
 ###Useful commands
