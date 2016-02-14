@@ -3,30 +3,41 @@
 import ns3waf
 
 def configure(conf):
-    ns3waf.check_modules(conf, ['core', 'network', 'dce', 'point-to-point', 'netanim'], mandatory = True)
+	ns3waf.check_modules(conf, ['core', 'network', 'dce', 'point-to-point', 'netanim'], mandatory = True)
 
 def build(bld):
-    bld.build_a_script('dce',
+	bld.build_a_script('dce',
 				  needed = ['core', 'network', 'dce', 'point-to-point', 'csma', 'netanim'],
 				  target='bin/my-simulator',
 				  source=['DataParser.cc', 'my-simulator.cc'],)
 
-    bld.program(source='dce-server-sctp.cc',
-                target='../../bin_dce/dce-server-sctp',
-                cxxflags = [ '-fPIC'], 
-                linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
+	bld.program(source='dce-server-sctp.cc',
+				target='../../bin_dce/dce-server-sctp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='SenderContent.cc dce-client-sctp.cc',
-                target='../../bin_dce/dce-client-sctp',
-                cxxflags = [ '-fPIC'], 
-                linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
+	bld.program(source='SenderContent.cc dce-client-sctp.cc',
+				target='../../bin_dce/dce-client-sctp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lsctp', '-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='dce-server-tcp.cc',
-                target='../../bin_dce/dce-server-tcp',
-                cxxflags = [ '-fPIC'], 
-                linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+	bld.program(source='dce-server-tcp.cc',
+				target='../../bin_dce/dce-server-tcp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
 
-    bld.program(source='SenderContent.cc dce-client-tcp.cc', 
-                target='../../bin_dce/dce-client-tcp',
-                cxxflags = [ '-fPIC'], 
-                linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+	bld.program(source='SenderContent.cc dce-client-tcp.cc', 
+				target='../../bin_dce/dce-client-tcp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+
+	bld.program(source='dce-server-dccp.cc',
+				target='../../bin_dce/dce-server-dccp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+
+	bld.program(source='SenderContent.cc dce-client-dccp.cc', 
+				target='../../bin_dce/dce-client-dccp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+

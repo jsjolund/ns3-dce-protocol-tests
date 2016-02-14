@@ -33,11 +33,11 @@ template<typename T> std::string to_string(T value) {
 }
 
 enum Protocol {
-	SCTP, TCP
+	SCTP, TCP, DCCP
 };
-static const char * PROTOCOL_NAMES[] = { "sctp", "tcp" };
-static const char * PROROCOL_CLIENTS[] = { "dce-client-sctp", "dce-client-tcp" };
-static const char * PROROCOL_SERVERS[] = { "dce-server-sctp", "dce-server-tcp" };
+static const char * PROTOCOL_NAMES[] = { "sctp", "tcp", "dccp" };
+static const char * PROROCOL_CLIENTS[] = { "dce-client-sctp", "dce-client-tcp", "dce-client-dccp" };
+static const char * PROROCOL_SERVERS[] = { "dce-server-sctp", "dce-server-tcp", "dce-server-dccp" };
 const char * getNameForProtocol(int p) {
 	return PROTOCOL_NAMES[p];
 }
@@ -61,8 +61,8 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 	apps.Start(at);
 }
 
-int run_simulation(Protocol protocol, const char* output_dir, int number_of_nodes, int data_rate, int data_delay, int transfer_data,
-		int time_to_live, int number_of_streams, int unordered) {
+int run_simulation(Protocol protocol, const char* output_dir, int number_of_nodes, int data_rate, int data_delay,
+		int transfer_data, int time_to_live, int number_of_streams, int unordered) {
 
 	Time sim_stop_time = Seconds(1000.0);
 
@@ -74,15 +74,19 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
 	std::string protocol_name_str = to_string(getNameForProtocol(protocol));
-	std::string prefix = "sim";
-	std::string output_filename =
-			output_dir + prefix + "-" + protocol_name_str + "-" + transfer_data_str + "-" + to_string(clock()) + "_";
+	std::string sim_id = to_string(clock());
+	std::string output_filename = output_dir + protocol_name_str + "-data-" + transfer_data_str + "-sim-" + sim_id
+			+ "-node";
 
-	NS_LOG_UNCOND(
-			"Simulation started\nProtocol:" + protocol_name_str + "\nNumber of nodes: " + number_of_nodes_str
-					+ "\nData rate: " + data_rate_str + " Mbps\nData delay: " + data_delay_str
-					+ " ms\nNumber of bytes to transfer: " + transfer_data_str + "\nTime to live: " + time_to_live_str
-					+ "\nNumber of streams: " + number_of_streams_str + "\n");
+	NS_LOG_UNCOND("Simulation id:\t" + sim_id);
+	NS_LOG_UNCOND("Protocol:\t" + protocol_name_str);
+	NS_LOG_UNCOND("Node amount:\t" + number_of_nodes_str);
+	NS_LOG_UNCOND("Data rate:\t" + data_rate_str + " Mbps");
+	NS_LOG_UNCOND("Data delay:\t" + data_delay_str + " ms");
+	NS_LOG_UNCOND("Client payload:\t" + transfer_data_str + " bytes");
+	NS_LOG_UNCOND("Time to live:\t" + time_to_live_str + " ms");
+	NS_LOG_UNCOND("Streams:\t" + number_of_streams_str + " per client");
+	NS_LOG_UNCOND("");
 
 	GlobalValue::Bind("ChecksumEnabled", BooleanValue(true));
 
@@ -124,8 +128,8 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 	// Server output pcap: sim-[protocol]-[size]-[clock]_-0-0.pcap
 	// Terminal output, run: cat files-0/var/log/*/stdout
 	process.SetBinary(getReceiverForProtocol(protocol));
-	process.ResetArguments();
 	process.SetStackSize(1 << 16);
+	process.ResetArguments();
 	apps = process.Install(nodes.Get(0));
 
 	apps.Start(Seconds(1.0));
@@ -134,13 +138,13 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 	// Terminal output, run: cat files-i/var/log/*/stdout
 	for (int i = 1; i < number_of_nodes; i++) {
 		process.SetBinary(getSenderForProtocol(protocol));
+		process.SetStackSize(1 << 16);
 		process.ResetArguments();
 		process.AddArguments("-a", "10.0.0.1");
 		process.AddArguments("-d", transfer_data_str); // amount of data per stream in bytes
 		process.AddArguments("-t", time_to_live_str); // packets time to live in milliseconds (0 == ttl disabled)
 		process.AddArguments("-u", unordered_str); // un-ordered delivery of data
 		process.AddArguments("-s", number_of_streams_str); // number of streams
-		process.SetStackSize(1 << 16);
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(1.5));
 
@@ -167,10 +171,10 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 10; // NOTE: must be at least 2, one server, one client
+	int number_of_nodes = 5; // NOTE: must be at least 2, one server, one client
 	int data_rate = 1; // Data rate for simulation in Mbps
 	int data_delay = 30; // Server delay in ms
-	int transfer_data_start = 16383; // Amount of bytes to send, starting value
+	int transfer_data_start = 1024; // Amount of bytes to send, starting value
 	int transfer_data_end = 16384; // Amount of bytes to send, ending value
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
 	int number_of_streams = 5; // Number of sctp streams
@@ -179,25 +183,24 @@ int main(int argc, char *argv[]) {
 	int retransmission_timeout = 0; // TODO
 	int hb_interval = 0; // TODO
 
-	// Clear output directory if it exists
 	const char* output_dir = "my-simulator-output/";
-	struct stat st = {0};
-	if (stat(output_dir, &st) != -1) {
-		// Clear output dir
-		std::string command = "rm -rfv ";
-		command.append(output_dir);
-		system(command.c_str());
-	}
+
+	// Clear output directory if it exists
+	std::string command = "rm -rf ";
+	command.append(output_dir);
+	system(command.c_str());
+	system("rm -rf files-*");
 	mkdir(output_dir, 0750);
-	printf("\n");
-	
+
 	// Run the simulation
-	int i;
+	int i, j;
 	for (i = transfer_data_start; i <= transfer_data_end; i += 1024) {
-		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
-		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams,
+				unordered);
+		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams,
+				unordered);
+		//~ run_simulation(DCCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 	}
-	//exit(0);
 	// Loop over all pcap files in current directory
 	struct dirent **namelist;
 	int num_files = scandir(output_dir, &namelist, 0, alphasort);
@@ -207,12 +210,21 @@ int main(int argc, char *argv[]) {
 		for (i = 0; i < num_files; i++) {
 			std::string filename = std::string(output_dir) + namelist[i]->d_name;
 			// Parse only the server pcap files
-			if (filename.substr(filename.find_last_of("_") + 1) == "-0-0.pcap") {
+			if (filename.substr(filename.find_last_of("node") + 1) == "-0-0.pcap") {
 				// We found a server pcap file, input it to graph handler
 				size_t lastindex = filename.find_last_of(".");
 				std::string filename_no_ext = filename.substr(0, lastindex);
-				std::string filename_totals = std::string(output_dir) + "simtotal";
-				start_data_parser("sctp", filename_no_ext, filename_totals, "-printall");
+
+				for (j = 0; j < 3; j++) {
+					const char * protocol = PROTOCOL_NAMES[j];
+					std::string protocol_str = std::string(protocol);
+					std::string output_dir_str = std::string(output_dir);
+					std::string filename_totals = output_dir_str + protocol_str + "_simtotal";
+					if (filename.find(output_dir_str + protocol_str) == 0) {
+						start_data_parser(protocol_str, filename_no_ext, filename_totals, "-printall");
+					}
+				}
+
 			}
 		}
 	}
