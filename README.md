@@ -50,7 +50,7 @@ git checkout -t origin/master
 ###Plotting
 The plotting program is separate from the simulation. To plot the results from a simulation, run:
 ```
-cd $NS3_HOME/source/ns-3-dce/build/myscripts/my-sctp-test/bin/
+cd $NS3_HOME/source/ns-3-dce/build/myscripts/my-simulator/bin/
 ./NSplot output.png ../../../../my-simulator-output/*.dat -2d
 ```
 
