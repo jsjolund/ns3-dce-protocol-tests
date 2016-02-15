@@ -24,7 +24,7 @@ Most Linux systems place restrictions on how many user processes can be run at t
 *         hard    nproc     65536
 *         soft    nproc      65536
 ```
-For more information see the [DCE manual](https://www.nsnam.org/docs/dce/release/1.4/manual/singlehtml/index.html#processes-limit-resource-temporarily-unavailable).
+Restart your computer to apply the settings. For more information see the [DCE manual](https://www.nsnam.org/docs/dce/release/1.4/manual/singlehtml/index.html#processes-limit-resource-temporarily-unavailable).
 
 ###Downloading the project
 Assuming the NS-3 DCE installation directory
