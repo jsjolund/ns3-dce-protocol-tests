@@ -41,10 +41,10 @@ static const char * PROROCOL_SERVERS[] = { "dce-server-sctp", "dce-server-tcp", 
 const char * getNameForProtocol(int p) {
 	return PROTOCOL_NAMES[p];
 }
-const char * getSenderForProtocol(int p) {
+const char * getClientForProtocol(int p) {
 	return PROROCOL_CLIENTS[p];
 }
-const char * getReceiverForProtocol(int p) {
+const char * getServerForProtocol(int p) {
 	return PROROCOL_SERVERS[p];
 }
 
@@ -64,7 +64,7 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 int run_simulation(Protocol protocol, const char* output_dir, int number_of_nodes, int data_rate, int data_delay,
 		int transfer_data, int time_to_live, int number_of_streams, int unordered) {
 
-	Time sim_stop_time = Seconds(1000.0);
+	Time sim_stop_time = Seconds(10000.0);
 
 	std::string number_of_nodes_str = to_string(number_of_nodes);
 	std::string data_rate_str = to_string(data_rate);
@@ -127,17 +127,17 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 
 	// Server output pcap: sim-[protocol]-[size]-[clock]_-0-0.pcap
 	// Terminal output, run: cat files-0/var/log/*/stdout
-	process.SetBinary(getReceiverForProtocol(protocol));
+	process.SetBinary(getServerForProtocol(protocol));
 	process.SetStackSize(1 << 16);
 	process.ResetArguments();
 	apps = process.Install(nodes.Get(0));
 
-	apps.Start(Seconds(1.0));
+	apps.Start(Seconds(4.0));
 
 	// Clients output pcap: sim-[protocol]-[size]-[clock]_-[i]-0.pcap
 	// Terminal output, run: cat files-i/var/log/*/stdout
 	for (int i = 1; i < number_of_nodes; i++) {
-		process.SetBinary(getSenderForProtocol(protocol));
+		process.SetBinary(getClientForProtocol(protocol));
 		process.SetStackSize(1 << 16);
 		process.ResetArguments();
 		process.AddArguments("-a", "10.0.0.1");
@@ -146,7 +146,7 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 		process.AddArguments("-u", unordered_str); // un-ordered delivery of data
 		process.AddArguments("-s", number_of_streams_str); // number of streams
 		apps = process.Install(nodes.Get(i));
-		apps.Start(Seconds(1.5));
+		apps.Start(Seconds(4.5));
 
 		float x = 10 * (i - 1);
 		float y = 40 * sin(3.14 * ((float) i - 1) / ((float) number_of_nodes - 2));
@@ -171,11 +171,11 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 }
 
 int main(int argc, char *argv[]) {
-	int number_of_nodes = 5; // NOTE: must be at least 2, one server, one client
-	int data_rate = 1; // Data rate for simulation in Mbps
-	int data_delay = 30; // Server delay in ms
-	int transfer_data_start = 1024; // Amount of bytes to send, starting value
-	int transfer_data_end = 1024*100; // Amount of bytes to send, ending value
+	int number_of_nodes = 2; // NOTE: must be at least 2, one server, one client
+	int data_rate = 5; // Data rate for simulation in Mbps
+	int data_delay = 2; // Server delay in ms
+	int transfer_data_start = 1024*20-1; // Amount of bytes to send, starting value
+	int transfer_data_end = 1024*20; // Amount of bytes to send, ending value
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
 	int number_of_streams = 5; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order

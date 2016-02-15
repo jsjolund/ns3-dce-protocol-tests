@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons( SERVER_PORT);
 
-	int on = 1;
-	int result = setsockopt(master_socket, SOL_DCCP, SO_REUSEADDR, (const char *) &on, sizeof(on));
+	//~ int on = 1;
+	//~ int result = setsockopt(master_socket, SOL_DCCP, SO_REUSEADDR, (const char *) &on, sizeof(on));
 
 	// Bind and listen to master socket, allow 5 pending connections
 	if (bind(master_socket, (struct sockaddr *) &address, sizeof(address)) < 0) {
