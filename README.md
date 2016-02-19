@@ -14,12 +14,33 @@ apt-get install gcc g++ python python-dev qt4-dev-tools libqt4-dev mercurial bzr
 ```
 Optional: ```apt-get install python-pygccxml```, but having it installed may cause build errors...
 
-###Building
-[Install the Bake build tool](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-basic-mode), then [build DCE advanced mode  (with Linux kernel)](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-advanced-mode-with-linux-kernel).
-If you get a bulid error about compiler problems, add [compiler-gcc5.h](compiler-gcc5.h) to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
+###Building NS-3 with DCE
+First, install the Bake build tool. In a terminal, change to the directory in which you wish to install it, then run
+```
+hg clone http://code.nsnam.org/bake bake
+export BAKE_HOME=`pwd`/bake
+export PATH=$PATH:$BAKE_HOME
+export PYTHONPATH=$PYTHONPATH:$BAKE_HOME
+```
+Create a directory in which to download and build the DCE variant of NS-3. At the time of writing, 1.7 was the latest stable version.
+```
+mkdir dce
+cd dce
+bake.py configure -e dce-linux-1.7
+bake.py download
+bake.py build -vvv
+```
+If you get a bulid error about compiler problems,
+```
+/home/user/dce/source/net-next-sim-2.6.36/include/linux/compiler-gcc.h:90:30: fatal error: linux/compiler-gcc5.h: No such file or directory compilation terminated.
+```
+then add [compiler-gcc5.h](compiler-gcc5.h) to ```source/net-next-sim-2.6.36/include/linux/compiler-gcc5.h```
+
+[Link to the original installation instructions](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-basic-mode).
+
 
 ###Required system settings
-Most Linux systems place restrictions on how many user processes can be run at the same time, and how many files each process can open. This project needs to run multiple NS-3 simulation instances in order to generate useful network statistics, which creates a lot of processes. Therefore it is necessary to append the following lines to the end of ```/etc/security/limits.conf```:
+Most Linux systems place restrictions on how many user processes can be run at the same time, and how many files each process can open. This project needs to run multiple NS-3 simulation instances in order to generate useful network statistics, which creates a lot of files and processes. Therefore it is necessary to append the following lines to the end of ```/etc/security/limits.conf```:
 ```
 *         hard    nproc       65536
 *         soft    nproc       65536
@@ -46,7 +67,7 @@ git checkout -t origin/master
 ./waf configure --with-ns3=$NS3_HOME/build --prefix=$NS3_HOME/build \
                 --enable-kernel-stack=$NS3_HOME/source/net-next-sim-2.6.36/arch
 ./waf build
-./waf --run "my-simulator"
+./waf --run my-simulator
 ```
 
 ###Plotting
