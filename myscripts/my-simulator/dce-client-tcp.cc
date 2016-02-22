@@ -24,9 +24,11 @@ int main(int argc, char *argv[]) {
 
 	unsigned int bytes_to_transfer = 0;
 	char* receiver_ip = (char *) "\0";
+	int num_cycles = 1;
+	int time_between_cycles = 0;
 
 	// Parse input arguments 
-	while ((i = getopt(argc, argv, "a:d:t:s:u")) != -1) {
+	while ((i = getopt(argc, argv, "n:b:a:d:t:s:u")) != -1) {
 		switch (i) {
 		case 'a':
 			receiver_ip = optarg;
@@ -36,6 +38,14 @@ int main(int argc, char *argv[]) {
 			break;
 		case 's':
 			num_sockets = atoi(optarg);
+			break;
+		case 'n':
+			num_cycles = atoi(optarg);
+			printf("num_cycles=%d\n", num_cycles);
+			break;
+		case 'b':
+			time_between_cycles = atoi(optarg);
+			printf("time_between_cycles=%d\n", time_between_cycles);
 			break;
 		default:
 			break;
@@ -57,10 +67,14 @@ int main(int argc, char *argv[]) {
 	
 	// Send the specified amount of characters
 	i = 0;
-	SenderContent content(bytes_to_transfer);
-	while (content.fill(buffer, buffer_size)) {
-		send(sockets[i], buffer, (size_t) strlen(buffer), 0);
-		i = (i + 1) % num_sockets;
+	int j;
+	for(j = 0; j < num_cycles; j++){
+		SenderContent content(bytes_to_transfer);
+		while (content.fill(buffer, buffer_size)) {
+			send(sockets[i], buffer, (size_t) strlen(buffer), 0);
+			i = (i + 1) % num_sockets;
+		}
+		if (time_between_cycles > 0) sleep(time_between_cycles);
 	}
 	for (i = 0; i < num_sockets; i++) {
 		close(sockets[i]);

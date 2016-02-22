@@ -19,6 +19,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "DataParser.h"
 
@@ -48,6 +49,10 @@ const char * getServerForProtocol(int p) {
 	return PROROCOL_SERVERS[p];
 }
 
+void my_handler(int s){
+	exit(1); 
+}
+
 using namespace ns3;
 
 static void RunIp(Ptr<Node> node, Time at, std::string str) {
@@ -62,7 +67,7 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 }
 
 int run_simulation(Protocol protocol, const char* output_dir, int number_of_nodes, int data_rate, int data_delay,
-		int transfer_data, int time_to_live, int number_of_streams, int unordered) {
+		int transfer_data, int time_to_live, int number_of_streams, int unordered, int num_cycles, int time_between_cycles) {
 
 	Time sim_stop_time = Seconds(10000.0);
 
@@ -74,6 +79,8 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
 	std::string protocol_name_str = to_string(getNameForProtocol(protocol));
+	std::string num_cycles_str = to_string(num_cycles);
+	std::string time_between_cycles_str = to_string(time_between_cycles);
 	std::string sim_id = to_string(clock());
 	std::string output_filename = output_dir + protocol_name_str + "-data-" + transfer_data_str + "-sim-" + sim_id
 			+ "-node";
@@ -145,6 +152,8 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 		process.AddArguments("-t", time_to_live_str); // packets time to live in milliseconds (0 == ttl disabled)
 		process.AddArguments("-u", unordered_str); // un-ordered delivery of data
 		process.AddArguments("-s", number_of_streams_str); // number of streams
+		process.AddArguments("-b", time_between_cycles_str);
+		process.AddArguments("-n", num_cycles_str);
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(4.5));
 
@@ -170,36 +179,40 @@ int run_simulation(Protocol protocol, const char* output_dir, int number_of_node
 	return 0;
 }
 
-int main(int argc, char *argv[]) {
-	int number_of_nodes = 2; // NOTE: must be at least 2, one server, one client
+int main(int argc, char *argv[]) { 
+	int number_of_nodes = 5; // NOTE: must be at least 2, one server, one client
 	int data_rate = 5; // Data rate for simulation in Mbps
 	int data_delay = 2; // Server delay in ms
-	int transfer_data_start = 1024*20-1; // Amount of bytes to send, starting value
-	int transfer_data_end = 1024*20; // Amount of bytes to send, ending value
+	int transfer_data_start = 102400; // Amount of bytes to send, starting value
+	int transfer_data_end = 1024000; // Amount of bytes to send, ending value
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
-	int number_of_streams = 5; // Number of sctp streams
+	int number_of_streams = 4; // Number of sctp streams
 	int unordered = 0;	// If packets should be sent in order
-
+	
+	int num_cycles = 1; // How many cycles to run in on/off-mode, in seconds
+	int time_between_cycles = 2; // How long to wait during on/off-mode, in seconds
+	
 	int retransmission_timeout = 0; // TODO
 	int hb_interval = 0; // TODO
 
 	const char* output_dir = "my-simulator-output/";
 
+	// Catch ctrl+c
+	signal (SIGINT, my_handler);
 	// Clear output directory if it exists
 	std::string command = "rm -rf " + std::string(output_dir);
 	system(command.c_str());
 	mkdir(output_dir, 0750);
 	// Clear DCE file system
 	system("rm -rf files-*");
-
 	// Run the simulation
 	int i, j;
 	for (i = transfer_data_start; i <= transfer_data_end; i += 1024) {
-		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
-		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
+		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
 		//~ run_simulation(DCCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
-	
 	}
+	
 	// Loop over all pcap files in current directory
 	struct dirent **namelist;
 	int num_files = scandir(output_dir, &namelist, 0, alphasort);
@@ -220,7 +233,7 @@ int main(int argc, char *argv[]) {
 					std::string output_dir_str = std::string(output_dir);
 					std::string filename_totals = output_dir_str + protocol_str + "_simtotal";
 					if (filename.find(output_dir_str + protocol_str) == 0) {
-						start_data_parser(protocol_str, filename_no_ext, filename_totals, "-printall");
+						start_data_parser(protocol_str, filename_no_ext, filename_totals, "-print");
 					}
 				}
 

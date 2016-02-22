@@ -24,6 +24,7 @@ int main(int argc, char **argv) {
 	struct sctp_initmsg initmsg;
 	struct sockaddr_in server_addr;
 	struct sctp_event_subscribe s_events;
+	struct sctp_rtoinfo s_rto;
 	struct sctp_status s_status;
 
 	// Last buffer byte holds null terminator to give 1024 data size in packet.
@@ -35,9 +36,12 @@ int main(int argc, char **argv) {
 	unsigned int ttl = 0;
 	unsigned int flags = 0;
 	unsigned int num_streams = 1;
+	unsigned int num_cycles = 1;
+	unsigned int time_between_cycles = 0;
 	char* receiver_ip = (char *) "\0";
+	
 
-	while ((i = getopt(argc, argv, "a:d:t:s:u")) != -1) {
+	while ((i = getopt(argc, argv, "n:b:a:d:t:s:u")) != -1) {
 		switch (i) {
 		case 'a':
 			receiver_ip = optarg;
@@ -54,6 +58,15 @@ int main(int argc, char **argv) {
 		case 'u':
 			flags |= SCTP_UNORDERED;
 			break;
+		case 'n':
+			num_cycles = atoi(optarg);
+			printf("num_cycles=%d\n", num_cycles);
+			break;
+		case 'b':
+			time_between_cycles = atoi(optarg);
+			printf("time_between_cycles=%d\n", time_between_cycles);
+			break;
+		
 		default:
 			break;
 		}
@@ -84,9 +97,17 @@ int main(int argc, char **argv) {
 	memset(&s_events, 0, sizeof(s_events));
 	s_events.sctp_data_io_event = 1;
 	if (setsockopt(connect_sock, SOL_SCTP, SCTP_EVENTS, (const void *) &s_events, 9) < 0) {
-		perror("SCTP: Event error\n");
+		perror("SCTP: SCTP_EVENTS error\n");
 		exit(EXIT_FAILURE);
 	}
+	//~ memset(&s_rto, 0, sizeof(s_rto));
+	//~ s_rto.srto_initial = 3000;
+	//~ s_rto.srto_min = 1000;
+	//~ s_rto.srto_max = 60000;
+	//~ if (setsockopt(connect_sock, SOL_SCTP, SCTP_RTOINFO, (const void *) &s_rto, sizeof(s_rto)) < 0) {
+		//~ perror("SCTP: SCTP_RTOINFO error\n");
+		//~ exit(EXIT_FAILURE);
+	//~ }
 	// Print SCTP connection status
 	int s_status_len = sizeof(s_status);
 	getsockopt(connect_sock, SOL_SCTP, SCTP_STATUS, (void *) &s_status, (socklen_t *) &s_status_len);
@@ -96,11 +117,14 @@ int main(int argc, char **argv) {
 	printf("outstrms  = %d\n", s_status.sstat_outstrms);
 
 	// Send the specified amount of characters, distribute them by 1024 bytes on each stream
-	int stream_i = 0;
-	SenderContent content(bytes_to_transfer);
-	while (content.fill(buffer, buffer_size)) {
-		sctp_sendmsg(connect_sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, stream_i, ttl, 0);
-		stream_i = (stream_i + 1) % num_streams;
+	int stream_i = 0, j;
+	for (j = 0; j < num_cycles; j++) {
+		SenderContent content(bytes_to_transfer);
+		while (content.fill(buffer, buffer_size)) {
+			sctp_sendmsg(connect_sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, stream_i, ttl, 0);
+			stream_i = (stream_i + 1) % num_streams;
+		}
+		if (time_between_cycles > 0) sleep(time_between_cycles);
 	}
 	close(connect_sock);
 	return 0;
