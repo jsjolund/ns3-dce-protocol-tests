@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 	memset(client_reads, 0, sizeof(client_reads));
 	memset(&address, 0, sizeof(address));
 	// Create SCTP master socket
-	if ((master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) == 0) {
+	if ((master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
 		perror("SCTP: Socket failed\n");
 		exit(EXIT_FAILURE);
 	}

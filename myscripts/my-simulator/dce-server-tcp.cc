@@ -13,8 +13,7 @@
 #define MAX_CLIENTS 1024
 
 int main(int argc, char *argv[]) {
-	int master_socket, new_socket, client_socket[MAX_CLIENTS], client_reads[MAX_CLIENTS], max_clients = MAX_CLIENTS, i,
-			bytes_read, sd;
+	int master_socket, new_socket, client_socket[MAX_CLIENTS], client_reads[MAX_CLIENTS], i, bytes_read, sd;
 	int max_sd;
 	struct sockaddr_in address;
 	fd_set readfds;
@@ -23,7 +22,7 @@ int main(int argc, char *argv[]) {
 	memset(client_reads, 0, sizeof(client_reads));
 	memset(&address, 0, sizeof(address));
 	// Create TCP master socket
-	if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+	if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("TCP: Socket failed\n");
 		exit(EXIT_FAILURE);
 	}
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]) {
 		FD_SET(master_socket, &readfds);
 		max_sd = master_socket;
 		// Add all valid sockets to the set, find max socket number
-		for (i = 0; i < max_clients; i++) {
+		for (i = 0; i < MAX_CLIENTS; i++) {
 			sd = client_socket[i];
 			if (sd > 0)
 				FD_SET(sd, &readfds);
@@ -67,7 +66,7 @@ int main(int argc, char *argv[]) {
 			}
 			printf("TCP: New connection: %s:%d\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 			// Add new socket descriptor
-			for (i = 0; i < max_clients; i++) {
+			for (i = 0; i < MAX_CLIENTS; i++) {
 				if (client_socket[i] == 0) {
 					client_socket[i] = new_socket;
 					break;
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		// Check other sockets for activity
-		for (i = 0; i < max_clients; i++) {
+		for (i = 0; i < MAX_CLIENTS; i++) {
 			sd = client_socket[i];
 			if (FD_ISSET(sd, &readfds)) {
 				getpeername(sd, (struct sockaddr*) &address, (socklen_t*) &address);

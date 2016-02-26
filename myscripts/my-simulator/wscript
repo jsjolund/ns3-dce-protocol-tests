@@ -32,6 +32,16 @@ def build(bld):
 				cxxflags = [ '-fPIC'], 
 				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
 
+	# UDP client/server
+	bld.program(source='dce-server-udp.cc',
+				target='../../bin_dce/dce-server-udp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+	bld.program(source='SenderContent.cc dce-client-udp.cc', 
+				target='../../bin_dce/dce-client-udp',
+				cxxflags = [ '-fPIC'], 
+				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
+
 	# DCCP client/server
 	bld.program(source='dce-server-dccp.cc',
 				target='../../bin_dce/dce-server-dccp',

@@ -392,14 +392,10 @@ void HELP_MSG() {
 	exit(1);
 }
 
-void start_data_parser(string protocol, string sourceFile, string targetFile, string print) {
+void start_data_parser(string protocol, int data_bytes_per_node, string sourceFile, string targetFile, string print) {
 
-	
-	//setenv("file", sourceFile.c_str(), true);
-	//system("./pcap-convert.sh");
 	string convert = "tshark -V -r " + sourceFile + ".pcap > " + sourceFile + ".txt";
 	system(convert.c_str());
-
 
 	string input_file = sourceFile;
 	string output_file = sourceFile + "-parse.txt";

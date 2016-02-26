@@ -11,8 +11,6 @@
 
 #define SERVER_PORT 3007
 
-using namespace std;
-
 int main(int argc, char *argv[]) {
 	struct hostent *host;
 	struct sockaddr_in address;
@@ -54,15 +52,11 @@ int main(int argc, char *argv[]) {
 	int sockets[num_sockets];
 
 	for (i = 0; i < num_sockets; i++) {
-		sockets[i] = socket(PF_INET, SOCK_STREAM, 0);
+		sockets[i] = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		address.sin_family = AF_INET;
 		address.sin_port = htons(SERVER_PORT);
 		host = gethostbyname(receiver_ip);
 		memcpy(&address.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-		if (connect(sockets[i], (const struct sockaddr *) &address, sizeof(address)) < 0) {
-			perror("TCP: Connect failed\n");
-			exit(EXIT_FAILURE);
-		}
 	}
 
 	// Send the specified amount of characters
@@ -71,7 +65,8 @@ int main(int argc, char *argv[]) {
 	for (j = 0; j < num_cycles; j++) {
 		SenderContent content(bytes_to_transfer);
 		while (content.fill(buffer, buffer_size)) {
-			send(sockets[i], buffer, (size_t) strlen(buffer), 0);
+			sendto(sockets[i], buffer, (size_t) strlen(buffer), 0, (const struct sockaddr *) &address, sizeof(address));
+			usleep(10000);
 			i = (i + 1) % num_sockets;
 		}
 		if (time_between_cycles > 0)
@@ -81,4 +76,5 @@ int main(int argc, char *argv[]) {
 		close(sockets[i]);
 	}
 	return 0;
+
 }

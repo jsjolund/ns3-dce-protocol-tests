@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
 	unsigned int num_cycles = 1;
 	unsigned int time_between_cycles = 0;
 	char* receiver_ip = (char *) "\0";
-	
 
 	while ((i = getopt(argc, argv, "n:b:a:d:t:s:u")) != -1) {
 		switch (i) {
@@ -66,7 +65,7 @@ int main(int argc, char **argv) {
 			time_between_cycles = atoi(optarg);
 			printf("time_between_cycles=%d\n", time_between_cycles);
 			break;
-		
+
 		default:
 			break;
 		}
@@ -105,9 +104,10 @@ int main(int argc, char **argv) {
 	//~ s_rto.srto_min = 1000;
 	//~ s_rto.srto_max = 60000;
 	//~ if (setsockopt(connect_sock, SOL_SCTP, SCTP_RTOINFO, (const void *) &s_rto, sizeof(s_rto)) < 0) {
-		//~ perror("SCTP: SCTP_RTOINFO error\n");
-		//~ exit(EXIT_FAILURE);
+	//~ perror("SCTP: SCTP_RTOINFO error\n");
+	//~ exit(EXIT_FAILURE);
 	//~ }
+	
 	// Print SCTP connection status
 	int s_status_len = sizeof(s_status);
 	getsockopt(connect_sock, SOL_SCTP, SCTP_STATUS, (void *) &s_status, (socklen_t *) &s_status_len);
@@ -124,7 +124,8 @@ int main(int argc, char **argv) {
 			sctp_sendmsg(connect_sock, buffer, (size_t) strlen(buffer), NULL, 0, 0, flags, stream_i, ttl, 0);
 			stream_i = (stream_i + 1) % num_streams;
 		}
-		if (time_between_cycles > 0) sleep(time_between_cycles);
+		if (time_between_cycles > 0)
+			sleep(time_between_cycles);
 	}
 	close(connect_sock);
 	return 0;
