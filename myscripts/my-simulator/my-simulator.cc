@@ -91,10 +91,10 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	cout << left << setw(28) << "Simulation id:" << sim_id << endl;
 	cout << left << setw(28) << "Protocol:" << protocol_name_str << endl;
 	cout << left << setw(28) << "Node amount:" << number_of_nodes_str << endl;
-	cout << left << setw(28) << "Data rate:" << data_rate_str << endl;
-	cout << left << setw(28) << "Data delay:" << data_delay_str << endl;
-	cout << left << setw(28) << "Client payload:" << transfer_data_str << endl;
-	cout << left << setw(28) << "Time to live:" << time_to_live_str << endl;
+	cout << left << setw(28) << "Data rate:" << data_rate_str << " Mbps" << endl;
+	cout << left << setw(28) << "Data delay:" << data_delay_str << " ms" << endl;
+	cout << left << setw(28) << "Client payload:" << transfer_data_str << "*" << num_cycles << " bytes" << endl;
+	cout << left << setw(28) << "Time to live:" << time_to_live_str << " ms" << endl;
 	cout << left << setw(28) << "Streams:" << number_of_streams_str << endl;
 
 	GlobalValue::Bind("ChecksumEnabled", BooleanValue(true));
@@ -179,7 +179,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	std::string simtotal = output_dir + protocol_name_str + "_simtotal";
 	cout << left << setw(28) << "Protocol totals file:" << simtotal << endl;
 	cout << left << setw(28) << "Server pcap:" << server_pcap << ".pcap" << endl;
-	start_data_parser(protocol_name_str, transfer_data, server_pcap, simtotal, "-print");
+	start_data_parser(protocol_name_str, transfer_data * num_cycles, server_pcap, simtotal, "-print");
 
 	return output_filename;
 }
@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
 	int unordered = 0;	// If packets should be sent in order
 
 	// How many cycles to run in on/off-source. Each added cycle multplies the amount of data sent.
-	int num_cycles = 1; // Amount of cycles
+	int num_cycles = 2; // Amount of cycles
 	int time_between_cycles = 2; // How long to wait between cycles in seconds
 
 	// Packet capture, NetAnim and parsing files are put into this directory
