@@ -58,6 +58,6 @@ class DataParser {
 string GUI_line();
 void ARG_ERROR_MSG();
 void HELP_MSG();
-void start_data_parser(string protocol, int data_bytes_per_node, string sourceFile, string targetFile, string print);
+void start_data_parser(string protocol, int numClients, int dataBytesPerClient, string sourceFile, string targetFile, string print);
 
 #endif /* _DATAPARSER_H */

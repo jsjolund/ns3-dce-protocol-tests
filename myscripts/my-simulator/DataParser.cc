@@ -392,7 +392,8 @@ void HELP_MSG() {
 	exit(1);
 }
 
-void start_data_parser(string protocol, int data_bytes_per_node, string sourceFile, string targetFile, string print) {
+void start_data_parser(string protocol, int numClients, int dataBytesPerClient, string sourceFile, string targetFile, string print) {
+	cout << "Total data transmitted: " << numClients * dataBytesPerClient << endl; // For testing, remove later
 
 	string convert = "tshark -V -r " + sourceFile + ".pcap > " + sourceFile + ".txt";
 	system(convert.c_str());

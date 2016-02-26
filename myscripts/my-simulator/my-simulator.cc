@@ -68,13 +68,13 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 	apps.Start(at);
 }
 
-std::string run_simulation(Protocol protocol, const char* output_dir, int number_of_nodes, int data_rate,
+std::string run_simulation(Protocol protocol, const char* output_dir, int number_of_clients, int data_rate,
 		int data_delay, int transfer_data, int time_to_live, int number_of_streams, int unordered, int num_cycles,
 		int time_between_cycles) {
 
 	Time sim_stop_time = Seconds(10000.0);
 
-	std::string number_of_nodes_str = to_string(number_of_nodes);
+	std::string number_of_clients_str = to_string(number_of_clients);
 	std::string data_rate_str = to_string(data_rate);
 	std::string data_delay_str = to_string(data_delay);
 	std::string transfer_data_str = to_string(transfer_data);
@@ -90,7 +90,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	cout << endl << "********************************************************************************" << endl;
 	cout << left << setw(28) << "Simulation id:" << sim_id << endl;
 	cout << left << setw(28) << "Protocol:" << protocol_name_str << endl;
-	cout << left << setw(28) << "Node amount:" << number_of_nodes_str << endl;
+	cout << left << setw(28) << "Client amount:" << number_of_clients_str << endl;
 	cout << left << setw(28) << "Data rate:" << data_rate_str << " Mbps" << endl;
 	cout << left << setw(28) << "Data delay:" << data_delay_str << " ms" << endl;
 	cout << left << setw(28) << "Client payload:" << transfer_data_str << "*" << num_cycles << " bytes" << endl;
@@ -99,6 +99,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 
 	GlobalValue::Bind("ChecksumEnabled", BooleanValue(true));
 
+	int number_of_nodes = number_of_clients + 1;
 	NodeContainer nodes;
 	nodes.Create(number_of_nodes);
 
@@ -179,15 +180,15 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	std::string simtotal = output_dir + protocol_name_str + "_simtotal";
 	cout << left << setw(28) << "Protocol totals file:" << simtotal << endl;
 	cout << left << setw(28) << "Server pcap:" << server_pcap << ".pcap" << endl;
-	start_data_parser(protocol_name_str, transfer_data * num_cycles, server_pcap, simtotal, "-print");
+	start_data_parser(protocol_name_str, number_of_clients, transfer_data * num_cycles, server_pcap, simtotal, "-print");
 
 	return output_filename;
 }
 
 int main(int argc, char *argv[]) {
 
-	// Number of network nodes. Must be at least 2, one server, one client.
-	int number_of_nodes = 2;
+	// Number of client network nodes. There is only one server node.
+	int number_of_clients = 4;
 
 	// CSMA settings
 	int data_rate = 5; // Data rate for simulation in Mbps
@@ -221,9 +222,9 @@ int main(int argc, char *argv[]) {
 	// Run the simulation
 	int i;
 	for (i = transfer_data_start; i <= transfer_data_end; i += transfer_data_inc) {
-		run_simulation(SCTP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
-		run_simulation(TCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
-		run_simulation(UDP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
+		run_simulation(SCTP, output_dir, number_of_clients, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
+		run_simulation(TCP, output_dir, number_of_clients, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
+		run_simulation(UDP, output_dir, number_of_clients, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
 		//~ run_simulation(DCCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
 	}
 
