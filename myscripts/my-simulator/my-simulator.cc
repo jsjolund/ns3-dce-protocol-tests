@@ -5,7 +5,13 @@
 #include "ns3/internet-module.h"
 #include "ns3/csma-module.h"
 #include "ns3/netanim-module.h"
-
+#include "ns3/wifi-module.h"
+#include "ns3/core-module.h"
+#include "ns3/network-module.h"
+#include "ns3/mobility-module.h"
+#include "ns3/wifi-module.h"
+#include "ns3/internet-module.h"
+   
 #include <fstream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -103,14 +109,18 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	NodeContainer nodes;
 	nodes.Create(number_of_nodes);
 
-	NetDeviceContainer devices;
-
-	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue(data_rate_str + "Mbps"));
-	csma.SetChannelAttribute("Delay", TimeValue(MilliSeconds(data_delay)));
-	devices = csma.Install(nodes);
-
-	csma.EnablePcapAll(output_filename);
+	WifiHelper wifi = WifiHelper::Default ();
+	wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
+	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default ();
+	wifiMac.SetType ("ns3::AdhocWifiMac");
+	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
+	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default ();
+	wifiPhy.SetChannel (wifiChannel.Create ());
+	NetDeviceContainer devices = wifi.Install (wifiPhy, wifiMac, nodes);
+    wifiPhy.EnablePcap(output_filename, devices);
+    	
+	MobilityHelper mobility;
+	Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
 
 	DceManagerHelper processManager;
 	processManager.SetTaskManagerAttribute("FiberManagerType", StringValue("UcontextFiberManager"));
@@ -139,6 +149,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	process.SetStackSize(1 << 16);
 	process.ResetArguments();
 	apps = process.Install(nodes.Get(0));
+	positionAlloc->Add (Vector (0.0, 0.0, 0.0));
 
 	apps.Start(Seconds(4.0));
 
@@ -158,6 +169,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 
 		float x = 10 * (i - 1);
 		float y = 40 * sin(3.14 * ((float) i - 1) / ((float) number_of_nodes - 2));
+		positionAlloc->Add (Vector (x, y, 0.0));
 		AnimationInterface::SetConstantPosition(nodes.Get(i), x, y);
 	}
 	// Setup NetAnim tracing
@@ -170,7 +182,8 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	for (int i = 1; i < number_of_nodes; i++) {
 		anim.UpdateNodeDescription(i, "client" + to_string(i));
 	}
-
+	mobility.SetPositionAllocator (positionAlloc);
+	mobility.Install (nodes);
 	Simulator::Stop(sim_stop_time);
 	Simulator::Run();
 	Simulator::Destroy();

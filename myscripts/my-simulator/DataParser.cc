@@ -81,7 +81,7 @@ string GUI_line() {
 }
 
 //Searches for packets within a .pcap file
-void DataParser::packetExtractor() {
+void DataParser::packetExtractor(int expectedData) {
 	int current_frame = 1;
 	ifstream reader(filename.c_str());
 	ofstream erase(file_out.c_str());
@@ -110,7 +110,7 @@ void DataParser::packetExtractor() {
 	}
 	cout << GUI_line() << "\n";
 
-	insertTotalData(packetCounter, totalTime, totalData, totalUsefulData, dataChunks);
+	insertTotalData(packetCounter, totalTime, totalData, totalUsefulData, dataChunks, expectedData);
 
 }
 
@@ -326,11 +326,14 @@ void DataParser::insertPacketData(int frame, string sender, string reciever, dou
 }
 
 void DataParser::insertTotalData(int packetCounter, double totalTime, double totalData,
-								 double totalUsefulData, int dataChunks) {
+								 double totalUsefulData, int dataChunks, int expectedData) {
 	float dataPercentage = totalUsefulData / totalData * 100;
 	double speed = totalData / totalTime / 1024;
 	double dataChunkAvg = totalUsefulData / dataChunks;
 	double frameSizeAvg = totalData/packetCounter;
+	double expectedDataPercentage = totalUsefulData / expectedData * 100;
+	totalData = totalData / 1024;
+	totalUsefulData = totalUsefulData / 1024;
 	/*Write a line in a file for all simulations
 	 * Current file format (by columns)
 	 * [1] Number of frames
@@ -338,6 +341,7 @@ void DataParser::insertTotalData(int packetCounter, double totalTime, double tot
 	 * [3] Data sent (with headers etc.)
 	 * [4] Data sent (just useful data)
 	 * [5] Percentage of useful data
+	 * [6] Percentage of data loss
 	 * [6] Speed (in Mbytes/sec)
 	 * [7] Average frame size
 	 * [8] Number of data chunks
@@ -347,7 +351,7 @@ void DataParser::insertTotalData(int packetCounter, double totalTime, double tot
 	myfile.open(sum_file_out.c_str(), ios::app);
 	if(myfile.is_open()){
 		myfile << packetCounter << " " << totalTime << " "  << totalData << " "
-			  << totalUsefulData << " " << dataPercentage << " " << speed << " "
+			  << totalUsefulData << " " << dataPercentage << " " << expectedDataPercentage << " " << speed << " "
 			  << frameSizeAvg << " " << dataChunks << " " << dataChunkAvg << "\n";
 	}
 	myfile.close();
@@ -356,9 +360,10 @@ void DataParser::insertTotalData(int packetCounter, double totalTime, double tot
 		cout << "Extraction summary for " << filename << " (" << protocol << " protocol)" <<  "\n";
 		cout << left << setw(28) << "Number of frames: " << packetCounter << " frames" << "\n";
 		cout << left << setw(28) << "Total transmission time: " << totalTime << " s" << "\n";
-		cout << left << setw(28) << "Data sent (with headers): " << totalData << " bytes" << "\n";
-		cout << left << setw(28) << "Data sent (no headers): " << totalUsefulData << " bytes" << "\n";
+		cout << left << setw(28) << "Data sent (with headers): " << totalData << " Mbytes/s" << "\n";
+		cout << left << setw(28) << "Data sent (no headers): " << totalUsefulData << " Mbytes/s" << "\n";
 		cout << left << setw(28) << "Percentage of data: " <<  dataPercentage << " %" << "\n";
+		cout << left << setw(28) << "Percentage of expected data arrived: " <<  expectedDataPercentage << " %" << "\n";
 		cout << left << setw(28) << "Transmission speed: " << speed << " Mbytes/s" << "\n";
 		cout << left << setw(28) << "Average frame size: " << frameSizeAvg << " bytes" << "\n";
 		cout << left << setw(28) << "Data chunk count: " << dataChunks << " chunks" << "\n";
@@ -393,7 +398,6 @@ void HELP_MSG() {
 }
 
 void start_data_parser(string protocol, int numClients, int dataBytesPerClient, string sourceFile, string targetFile, string print) {
-	cout << "Total data transmitted: " << numClients * dataBytesPerClient << endl; // For testing, remove later
 
 	string convert = "tshark -V -r " + sourceFile + ".pcap > " + sourceFile + ".txt";
 	system(convert.c_str());
@@ -404,8 +408,12 @@ void start_data_parser(string protocol, int numClients, int dataBytesPerClient, 
 	sum_output_file += ".dat";
 	input_file += ".txt";
 	string prot = protocol;
+	int expectedData = numClients * dataBytesPerClient;
 
 	DataParser parser(input_file, prot, output_file, sum_output_file, print);
 	parser.GUI();
-	parser.packetExtractor();
+	parser.packetExtractor(expectedData);
 }
+
+
+
