@@ -145,14 +145,20 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	DceApplicationHelper process;
 	ApplicationContainer apps;
 
+	// Start DCE server program
 	process.SetBinary(getServerForProtocol(protocol));
 	process.SetStackSize(1 << 16);
 	process.ResetArguments();
 	apps = process.Install(nodes.Get(0));
-	positionAlloc->Add(Vector(0.0, 0.0, 0.0));
-
 	apps.Start(Seconds(4.0));
 
+	// Server NetAnim tracing, mobility position
+	float x = ((float) number_of_nodes - 2) * 5.0;
+	float y = 0;
+	AnimationInterface::SetConstantPosition(nodes.Get(0), x, y);
+	positionAlloc->Add(Vector(x, y, 0.0));
+	
+	// Start DCE client programs
 	for (int i = 1; i < number_of_nodes; i++) {
 		process.SetBinary(getClientForProtocol(protocol));
 		process.SetStackSize(1 << 16);
@@ -168,13 +174,13 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(4.5));
 
+		// Client NetAnim tracing, mobility position
 		float x = 10 * (i - 1);
 		float y = 40 * sin(3.14 * ((float) i - 1) / ((float) number_of_nodes - 2));
 		positionAlloc->Add(Vector(x, y, 0.0));
 		AnimationInterface::SetConstantPosition(nodes.Get(i), x, y);
 	}
-	// Setup NetAnim tracing
-	AnimationInterface::SetConstantPosition(nodes.Get(0), ((double) number_of_nodes - 2) * 5.0, 0);
+	// NetAnim tracing
 	AnimationInterface anim(output_filename + "-netanim.xml");
 	anim.EnableIpv4L3ProtocolCounters(Seconds(0), sim_stop_time);
 	anim.EnableQueueCounters(Seconds(0), sim_stop_time);
@@ -183,8 +189,10 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	for (int i = 1; i < number_of_nodes; i++) {
 		anim.UpdateNodeDescription(i, "client" + to_string(i));
 	}
+	// Install mobility
 	mobility.SetPositionAllocator(positionAlloc);
 	mobility.Install(nodes);
+	
 	Simulator::Stop(sim_stop_time);
 	Simulator::Run();
 	Simulator::Destroy();
@@ -205,9 +213,9 @@ int main(int argc, char *argv[]) {
 	int number_of_clients = 4;
 
 	// Amount of bytes to send
-	int transfer_data_start = 102400;
+	int transfer_data_start = 10240;
 	int transfer_data_inc = 1024;
-	int transfer_data_end = 102400;
+	int transfer_data_end = 10240;
 
 	// SCTP settings
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
