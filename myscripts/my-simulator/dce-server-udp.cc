@@ -38,8 +38,7 @@ int main(int argc, char *argv[]) {
 	}
 	printf("UDP: Listening on port %d\n", SERVER_PORT);
 	while (1) {
-		if ((bytes_read = recvfrom(master_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &address,
-				(socklen_t *) &address)) < 0) {
+		if ((bytes_read = recvfrom(master_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &address, (socklen_t *) &address)) < 0) {
 			perror("UDP: Recvfrom failed\n");
 			exit(EXIT_FAILURE);
 		}

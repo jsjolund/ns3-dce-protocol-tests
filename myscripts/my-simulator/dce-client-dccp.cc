@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	unsigned int bytes_to_transfer = 0;
 	char* receiver_ip = (char *) "\0";
 	// Parse input arguments
-	while ((i = getopt(argc, argv, "a:d:t:s:u")) != -1) {
+	while ((i = getopt(argc, argv, "p:a:d:t:s:u")) != -1) {
 		switch (i) {
 		case 'a':
 			receiver_ip = optarg;

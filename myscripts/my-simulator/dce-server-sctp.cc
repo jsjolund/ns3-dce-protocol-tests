@@ -18,8 +18,7 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-	int master_socket, new_socket, client_socket[MAX_CLIENTS], client_reads[MAX_CLIENTS], max_clients = MAX_CLIENTS, i,
-			bytes_read, sd;
+	int master_socket, new_socket, client_socket[MAX_CLIENTS], client_reads[MAX_CLIENTS], max_clients = MAX_CLIENTS, i, bytes_read, sd;
 	int max_sd;
 	struct sockaddr_in address;
 	struct sctp_initmsg s_initmsg;
@@ -95,17 +94,14 @@ int main(int argc, char **argv) {
 			if (FD_ISSET(sd, &readfds)) {
 				getpeername(sd, (struct sockaddr*) &address, (socklen_t*) &address);
 				// Check if it was for closing , and also read the incoming message
-				bytes_read = sctp_recvmsg(sd, (void *) buffer, sizeof(buffer), (struct sockaddr *) NULL, 0,
-						&s_sndrcvinfo, 0);
+				bytes_read = sctp_recvmsg(sd, (void *) buffer, sizeof(buffer), (struct sockaddr *) NULL, 0, &s_sndrcvinfo, 0);
 				if (bytes_read == 0) {
-					printf("SCTP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr),
-							ntohs(address.sin_port), client_reads[i]);
+					printf("SCTP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_reads[i]);
 					close(sd);
 					client_socket[i] = 0;
 					client_reads[i] = 0;
 				} else {
-					printf("SCTP: Read %d bytes from %s:%d\n", bytes_read, inet_ntoa(address.sin_addr),
-							ntohs(address.sin_port));
+					printf("SCTP: Read %d bytes from %s:%d\n", bytes_read, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 					client_reads[i] += bytes_read;
 				}
 

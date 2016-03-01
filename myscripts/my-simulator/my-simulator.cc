@@ -3,7 +3,6 @@
 #include "ns3/dce-module.h"
 #include "ns3/point-to-point-module.h"
 #include "ns3/internet-module.h"
-#include "ns3/csma-module.h"
 #include "ns3/netanim-module.h"
 #include "ns3/wifi-module.h"
 #include "ns3/core-module.h"
@@ -11,7 +10,7 @@
 #include "ns3/mobility-module.h"
 #include "ns3/wifi-module.h"
 #include "ns3/internet-module.h"
-   
+
 #include <fstream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,7 +56,7 @@ const char * getServerForProtocol(int p) {
 	return PROROCOL_SERVERS[p];
 }
 
-void my_handler(int s) {
+void sigint_handler(int s) {
 	exit(1);
 }
 
@@ -74,34 +73,35 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 	apps.Start(at);
 }
 
-std::string run_simulation(Protocol protocol, const char* output_dir, int number_of_clients, int data_rate,
-		int data_delay, int transfer_data, int time_to_live, int number_of_streams, int unordered, int num_cycles,
-		int time_between_cycles) {
+std::string run_simulation(Protocol protocol, const char* output_dir, int number_of_clients, int transfer_data, int time_to_live, int number_of_streams, int unordered, int num_cycles, int time_between_cycles_usec,
+		int packet_wait_period_usec) {
 
 	Time sim_stop_time = Seconds(10000.0);
 
 	std::string number_of_clients_str = to_string(number_of_clients);
-	std::string data_rate_str = to_string(data_rate);
-	std::string data_delay_str = to_string(data_delay);
 	std::string transfer_data_str = to_string(transfer_data);
 	std::string time_to_live_str = to_string(time_to_live);
 	std::string number_of_streams_str = to_string(number_of_streams);
 	std::string unordered_str = to_string(unordered);
 	std::string protocol_name_str = to_string(getNameForProtocol(protocol));
 	std::string num_cycles_str = to_string(num_cycles);
-	std::string time_between_cycles_str = to_string(time_between_cycles);
+	std::string time_between_cycles_usec_str = to_string(time_between_cycles_usec);
+	std::string packet_wait_period_usec_str = to_string(packet_wait_period_usec);
+
 	std::string sim_id = to_string(clock());
 	std::string output_filename = output_dir + protocol_name_str + "-data-" + transfer_data_str + "-sim-" + sim_id + "-node";
 
 	cout << endl << "********************************************************************************" << endl;
 	cout << left << setw(28) << "Simulation id:" << sim_id << endl;
 	cout << left << setw(28) << "Protocol:" << protocol_name_str << endl;
-	cout << left << setw(28) << "Client amount:" << number_of_clients_str << endl;
-	cout << left << setw(28) << "Data rate:" << data_rate_str << " Mbps" << endl;
-	cout << left << setw(28) << "Data delay:" << data_delay_str << " ms" << endl;
 	cout << left << setw(28) << "Client payload:" << transfer_data_str << "*" << num_cycles << " bytes" << endl;
+	cout << left << setw(28) << "Client amount:" << number_of_clients_str << endl;
 	cout << left << setw(28) << "Time to live:" << time_to_live_str << " ms" << endl;
-	cout << left << setw(28) << "Streams:" << number_of_streams_str << endl;
+	cout << left << setw(28) << "SCTP streams:" << number_of_streams_str << endl;
+	cout << left << setw(28) << "SCTP unordered:" << unordered_str << endl;
+	cout << left << setw(28) << "UDP packet period:" << packet_wait_period_usec_str << " usec" << endl;
+	cout << left << setw(28) << "Num send cycles:" << num_cycles_str << endl;
+	cout << left << setw(28) << "Time between cycles:" << time_between_cycles_usec_str << " usec" << endl;
 
 	GlobalValue::Bind("ChecksumEnabled", BooleanValue(true));
 
@@ -109,18 +109,18 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	NodeContainer nodes;
 	nodes.Create(number_of_nodes);
 
-	WifiHelper wifi = WifiHelper::Default ();
-	wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
-	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default ();
-	wifiMac.SetType ("ns3::AdhocWifiMac");
-	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
-	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default ();
-	wifiPhy.SetChannel (wifiChannel.Create ());
-	NetDeviceContainer devices = wifi.Install (wifiPhy, wifiMac, nodes);
-    wifiPhy.EnablePcap(output_filename, devices);
-    	
+	WifiHelper wifi = WifiHelper::Default();
+	wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
+	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default();
+	wifiMac.SetType("ns3::AdhocWifiMac");
+	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
+	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
+	wifiPhy.SetChannel(wifiChannel.Create());
+	NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, nodes);
+	wifiPhy.EnablePcap(output_filename, devices);
+
 	MobilityHelper mobility;
-	Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
+	Ptr < ListPositionAllocator > positionAlloc = CreateObject<ListPositionAllocator>();
 
 	DceManagerHelper processManager;
 	processManager.SetTaskManagerAttribute("FiberManagerType", StringValue("UcontextFiberManager"));
@@ -149,7 +149,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	process.SetStackSize(1 << 16);
 	process.ResetArguments();
 	apps = process.Install(nodes.Get(0));
-	positionAlloc->Add (Vector (0.0, 0.0, 0.0));
+	positionAlloc->Add(Vector(0.0, 0.0, 0.0));
 
 	apps.Start(Seconds(4.0));
 
@@ -158,18 +158,19 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 		process.SetStackSize(1 << 16);
 		process.ResetArguments();
 		process.AddArguments("-a", "10.0.0.1");
-		process.AddArguments("-d", transfer_data_str); // amount of data per stream in bytes
-		process.AddArguments("-t", time_to_live_str); // packets time to live in milliseconds (0 == ttl disabled)
-		process.AddArguments("-u", unordered_str); // un-ordered delivery of data
-		process.AddArguments("-s", number_of_streams_str); // number of streams
-		process.AddArguments("-b", time_between_cycles_str);
+		process.AddArguments("-d", transfer_data_str);
+		process.AddArguments("-t", time_to_live_str);
+		process.AddArguments("-u", unordered_str);
+		process.AddArguments("-s", number_of_streams_str);
+		process.AddArguments("-b", time_between_cycles_usec_str);
 		process.AddArguments("-n", num_cycles_str);
+		process.AddArguments("-p", packet_wait_period_usec_str);
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(4.5));
 
 		float x = 10 * (i - 1);
 		float y = 40 * sin(3.14 * ((float) i - 1) / ((float) number_of_nodes - 2));
-		positionAlloc->Add (Vector (x, y, 0.0));
+		positionAlloc->Add(Vector(x, y, 0.0));
 		AnimationInterface::SetConstantPosition(nodes.Get(i), x, y);
 	}
 	// Setup NetAnim tracing
@@ -182,8 +183,8 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	for (int i = 1; i < number_of_nodes; i++) {
 		anim.UpdateNodeDescription(i, "client" + to_string(i));
 	}
-	mobility.SetPositionAllocator (positionAlloc);
-	mobility.Install (nodes);
+	mobility.SetPositionAllocator(positionAlloc);
+	mobility.Install(nodes);
 	Simulator::Stop(sim_stop_time);
 	Simulator::Run();
 	Simulator::Destroy();
@@ -203,10 +204,6 @@ int main(int argc, char *argv[]) {
 	// Number of client network nodes. There is only one server node.
 	int number_of_clients = 4;
 
-	// CSMA settings
-	int data_rate = 5; // Data rate for simulation in Mbps
-	int data_delay = 2; // Server delay in ms
-
 	// Amount of bytes to send
 	int transfer_data_start = 102400;
 	int transfer_data_inc = 1024;
@@ -217,15 +214,18 @@ int main(int argc, char *argv[]) {
 	int number_of_streams = 4; // Number of streams
 	int unordered = 0;	// If packets should be sent in order
 
+	// UDP settings
+	int packet_wait_period_usec = 100000; // How many usec to wait between packets (no congestion control is used)
+
 	// How many cycles to run in on/off-source. Each added cycle multplies the amount of data sent.
 	int num_cycles = 2; // Amount of cycles
-	int time_between_cycles = 2; // How long to wait between cycles in seconds
+	int time_between_cycles_usec = 2000000; // How long to wait between cycles in usec
 
 	// Packet capture, NetAnim and parsing files are put into this directory
 	const char* output_dir = "my-simulator-output/";
 
 	// Catch ctrl+c
-	signal(SIGINT, my_handler);
+	signal(SIGINT, sigint_handler);
 	// Clear output directory if it exists
 	std::string command = "rm -rf " + std::string(output_dir);
 	system(command.c_str());
@@ -235,10 +235,11 @@ int main(int argc, char *argv[]) {
 	// Run the simulation
 	int i;
 	for (i = transfer_data_start; i <= transfer_data_end; i += transfer_data_inc) {
-		run_simulation(SCTP, output_dir, number_of_clients, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
-		run_simulation(TCP, output_dir, number_of_clients, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
-		run_simulation(UDP, output_dir, number_of_clients, data_rate, data_delay, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles);
-		//~ run_simulation(DCCP, output_dir, number_of_nodes, data_rate, data_delay, i, time_to_live, number_of_streams, unordered);
+		run_simulation(SCTP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
+		run_simulation(TCP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
+		run_simulation(UDP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
+		//~ run_simulation(DCCP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
+
 	}
 
 }

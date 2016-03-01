@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 	int time_between_cycles = 0;
 
 	// Parse input arguments 
-	while ((i = getopt(argc, argv, "n:b:a:d:t:s:u")) != -1) {
+	while ((i = getopt(argc, argv, "p:n:b:a:d:t:s:u")) != -1) {
 		switch (i) {
 		case 'a':
 			receiver_ip = optarg;
@@ -41,11 +41,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'n':
 			num_cycles = atoi(optarg);
-			printf("num_cycles=%d\n", num_cycles);
 			break;
 		case 'b':
 			time_between_cycles = atoi(optarg);
-			printf("time_between_cycles=%d\n", time_between_cycles);
 			break;
 		default:
 			break;
@@ -53,6 +51,7 @@ int main(int argc, char *argv[]) {
 	}
 	int sockets[num_sockets];
 
+	// Open the requested amount of sockets to distribute data on
 	for (i = 0; i < num_sockets; i++) {
 		sockets[i] = socket(PF_INET, SOCK_STREAM, 0);
 		address.sin_family = AF_INET;
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
 			i = (i + 1) % num_sockets;
 		}
 		if (time_between_cycles > 0)
-			sleep(time_between_cycles);
+			usleep(time_between_cycles);
 	}
 	for (i = 0; i < num_sockets; i++) {
 		close(sockets[i]);

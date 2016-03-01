@@ -360,11 +360,11 @@ void DataParser::insertTotalData(int packetCounter, double totalTime, double tot
 		cout << "Extraction summary for " << filename << " (" << protocol << " protocol)" <<  "\n";
 		cout << left << setw(28) << "Number of frames: " << packetCounter << " frames" << "\n";
 		cout << left << setw(28) << "Total transmission time: " << totalTime << " s" << "\n";
-		cout << left << setw(28) << "Data sent (with headers): " << totalData << " Mbytes/s" << "\n";
-		cout << left << setw(28) << "Data sent (no headers): " << totalUsefulData << " Mbytes/s" << "\n";
-		cout << left << setw(28) << "Percentage of data: " <<  dataPercentage << " %" << "\n";
-		cout << left << setw(28) << "Percentage of expected data arrived: " <<  expectedDataPercentage << " %" << "\n";
-		cout << left << setw(28) << "Transmission speed: " << speed << " Mbytes/s" << "\n";
+		cout << left << setw(28) << "Data sent (with headers): " << totalData << " MB" << "\n";
+		cout << left << setw(28) << "Data sent (no headers): " << totalUsefulData << " MB" << "\n";
+		cout << left << setw(28) << "Percent data in packet: " <<  dataPercentage << " %" << "\n";
+		cout << left << setw(28) << "Percent data loss: " <<  100.0 - expectedDataPercentage << " %" << "\n";
+		cout << left << setw(28) << "Transmission speed: " << speed << " MB/s" << "\n";
 		cout << left << setw(28) << "Average frame size: " << frameSizeAvg << " bytes" << "\n";
 		cout << left << setw(28) << "Data chunk count: " << dataChunks << " chunks" << "\n";
 		cout << left << setw(28) << "Averaga data per chunk: " << dataChunkAvg << " bytes" << "\n";

@@ -81,14 +81,12 @@ int main(int argc, char *argv[]) {
 				// Check if it was for closing , and also read the incoming message
 				bytes_read = read(sd, buffer, sizeof(buffer));
 				if (bytes_read == 0) {
-					printf("TCP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr),
-							ntohs(address.sin_port), client_reads[i]);
+					printf("TCP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_reads[i]);
 					close(sd);
 					client_socket[i] = 0;
 					client_reads[i] = 0;
 				} else {
-					printf("TCP: Read %d bytes from %s:%d\n", bytes_read, inet_ntoa(address.sin_addr),
-							ntohs(address.sin_port));
+					printf("TCP: Read %d bytes from %s:%d\n", bytes_read, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 					client_reads[i] += bytes_read;
 				}
 

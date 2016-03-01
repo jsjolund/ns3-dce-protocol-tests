@@ -15,8 +15,7 @@
 #define SOL_DCCP 269
 
 int main(int argc, char *argv[]) {
-	int master_socket, new_socket, client_socket[MAX_CLIENTS], client_reads[MAX_CLIENTS], max_clients = MAX_CLIENTS, i,
-			bytes_read, sd;
+	int master_socket, new_socket, client_socket[MAX_CLIENTS], client_reads[MAX_CLIENTS], max_clients = MAX_CLIENTS, i, bytes_read, sd;
 	int max_sd;
 	struct sockaddr_in address;
 	fd_set readfds;
@@ -88,14 +87,12 @@ int main(int argc, char *argv[]) {
 				// Check if it was for closing , and also read the incoming message
 				bytes_read = recv(sd, buffer, sizeof(buffer), 0);
 				if (bytes_read == 0) {
-					printf("DCCP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr),
-							ntohs(address.sin_port), client_reads[i]);
+					printf("DCCP: Disconnected: %s:%d total %d bytes\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_reads[i]);
 					close(sd);
 					client_socket[i] = 0;
 					client_reads[i] = 0;
 				} else {
-					printf("DCCP: Read %d bytes from %s:%d\n", bytes_read, inet_ntoa(address.sin_addr),
-							ntohs(address.sin_port));
+					printf("DCCP: Read %d bytes from %s:%d\n", bytes_read, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 					client_reads[i] += bytes_read;
 				}
 
