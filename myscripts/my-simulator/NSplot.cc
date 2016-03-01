@@ -195,6 +195,9 @@ void HLP_MSG() {
 	exit(1);
 }
 
+#define PLOT2D "gnuplot <<- EOF\n set term png\n set output '$output'\n set xlabel '$LabelX'\n set ylabel '$LabelY'\n set grid\n set key above\n $action\nEOF\ndisplay $output\n"
+#define PLOT3D "gnuplot <<- EOF\n set term png\n set output '$output'\n set xlabel '$LabelX'\n set ylabel '$LabelY'\n set zlabel '$LabelZ' rotate parallel\n set grid\n set key above\n $action\nEOF\ndisplay $output\n"
+
 //Main program
 int main(int argc, char* argv[]) {
 	//Some argument handling
@@ -216,13 +219,13 @@ int main(int argc, char* argv[]) {
 
 	//Starting bash scripts, depending on dimension
 	if(dimension == "-2d") {
-		system("./2Dplot.sh");
+		system(PLOT2D);
 	}
 	else if (dimension == "-3d") {
 		if (argc != 4) {
 			DIM_ERR_MSG();
 		}
-		system("./3Dplot.sh");
+		system(PLOT3D);
 	}
 	else {
 		DIM_ERR_MSG();

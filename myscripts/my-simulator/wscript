@@ -57,5 +57,4 @@ def build(bld):
 				target='bin/NSplot',
 				cxxflags = [ '-fPIC', '-std=c++11'], 
 				linkflags = ['-lstdc++', '-pie', '-rdynamic'])
-	bld(rule='cp ${SRC} ${TGT}', source='gnuplot/2Dplot.sh', target='bin/2Dplot.sh')
-	bld(rule='cp ${SRC} ${TGT}', source='gnuplot/3Dplot.sh', target='bin/3Dplot.sh')
+
