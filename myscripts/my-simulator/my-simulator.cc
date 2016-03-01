@@ -202,7 +202,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	std::string simtotal = output_dir + protocol_name_str + "_simtotal";
 	cout << left << setw(28) << "Protocol totals file:" << simtotal << endl;
 	cout << left << setw(28) << "Server pcap:" << server_pcap << ".pcap" << endl;
-	start_data_parser(protocol_name_str, number_of_clients, transfer_data * num_cycles, server_pcap, simtotal, "-print");
+	start_data_parser(protocol_name_str, number_of_clients, transfer_data * num_cycles, number_of_streams, server_pcap, simtotal, "-print");
 
 	return output_filename;
 }
@@ -210,12 +210,12 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 int main(int argc, char *argv[]) {
 
 	// Number of client network nodes. There is only one server node.
-	int number_of_clients = 4;
+	int number_of_clients = 3;
 
 	// Amount of bytes to send
-	int transfer_data_start = 10240;
+	int transfer_data_start = 1024;
 	int transfer_data_inc = 1024;
-	int transfer_data_end = 10240;
+	int transfer_data_end = 1024*200;
 
 	// SCTP settings
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
@@ -226,12 +226,11 @@ int main(int argc, char *argv[]) {
 	int packet_wait_period_usec = 100000; // How many usec to wait between packets (no congestion control is used)
 
 	// How many cycles to run in on/off-source. Each added cycle multplies the amount of data sent.
-	int num_cycles = 2; // Amount of cycles
+	int num_cycles = 10; // Amount of cycles
 	int time_between_cycles_usec = 2000000; // How long to wait between cycles in usec
 
 	// Packet capture, NetAnim and parsing files are put into this directory
 	const char* output_dir = "my-simulator-output/";
-
 	// Catch ctrl+c
 	signal(SIGINT, sigint_handler);
 	// Clear output directory if it exists
@@ -240,6 +239,7 @@ int main(int argc, char *argv[]) {
 	mkdir(output_dir, 0750);
 	// Clear DCE node file system
 	system("rm -rf files-*");
+	
 	// Run the simulation
 	int i;
 	for (i = transfer_data_start; i <= transfer_data_end; i += transfer_data_inc) {

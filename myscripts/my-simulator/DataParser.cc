@@ -397,8 +397,7 @@ void HELP_MSG() {
 	exit(1);
 }
 
-void start_data_parser(string protocol, int numClients, int dataBytesPerClient, string sourceFile, string targetFile, string print) {
-
+void start_data_parser(string protocol, int numClients, int dataBytesPerClient, int numberOfStreamsPerClient, string sourceFile, string targetFile, string print) {
 	string convert = "tshark -V -r " + sourceFile + ".pcap > " + sourceFile + ".txt";
 	system(convert.c_str());
 
