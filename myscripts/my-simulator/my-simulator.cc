@@ -1,11 +1,6 @@
 #include "ns3/core-module.h"
-#include "ns3/network-module.h"
 #include "ns3/dce-module.h"
-#include "ns3/point-to-point-module.h"
-#include "ns3/internet-module.h"
 #include "ns3/netanim-module.h"
-#include "ns3/wifi-module.h"
-#include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 #include "ns3/wifi-module.h"
@@ -31,7 +26,6 @@
 
 using std::string;
 using std::fstream;
-NS_LOG_COMPONENT_DEFINE ("HelloSimulator");
 
 template<typename T> std::string to_string(T value) {
 	std::ostringstream os;
@@ -39,6 +33,12 @@ template<typename T> std::string to_string(T value) {
 	return os.str();
 }
 
+void sigint_handler(int s) {
+	kill(::getpid(), 1);
+	exit(1);
+}
+
+// DCCP protocol does not work currently.
 enum Protocol {
 	SCTP, TCP, UDP, DCCP
 };
@@ -56,10 +56,6 @@ const char * getServerForProtocol(int p) {
 	return PROROCOL_SERVERS[p];
 }
 
-void sigint_handler(int s) {
-	exit(1);
-}
-
 using namespace ns3;
 
 static void RunIp(Ptr<Node> node, Time at, std::string str) {
@@ -73,12 +69,13 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 	apps.Start(at);
 }
 
-std::string run_simulation(Protocol protocol, const char* output_dir, int number_of_clients, int transfer_data, int time_to_live, int number_of_streams, int unordered, int num_cycles, int time_between_cycles_usec,
+void run_simulation(Protocol protocol, const char* output_dir, int number_of_clients, int transfer_data, int time_to_live, int number_of_streams, int unordered, int num_cycles, int time_between_cycles_usec,
 		int packet_wait_period_usec) {
 
 	Time sim_stop_time = Seconds(10000.0);
-
-	std::string number_of_clients_str = to_string(number_of_clients);
+	int nodeSpeed = 20; // Node mobility speed in m/s
+	int nodePause = 0; // Node mobility pause in seconds
+	
 	std::string transfer_data_str = to_string(transfer_data);
 	std::string time_to_live_str = to_string(time_to_live);
 	std::string number_of_streams_str = to_string(number_of_streams);
@@ -95,7 +92,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	cout << left << setw(28) << "Simulation id:" << sim_id << endl;
 	cout << left << setw(28) << "Protocol:" << protocol_name_str << endl;
 	cout << left << setw(28) << "Client payload:" << transfer_data_str << "*" << num_cycles << " bytes" << endl;
-	cout << left << setw(28) << "Client amount:" << number_of_clients_str << endl;
+	cout << left << setw(28) << "Client amount:" << to_string(number_of_clients) << endl;
 	cout << left << setw(28) << "Time to live:" << time_to_live_str << " ms" << endl;
 	cout << left << setw(28) << "SCTP streams:" << number_of_streams_str << endl;
 	cout << left << setw(28) << "SCTP unordered:" << unordered_str << endl;
@@ -109,6 +106,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	NodeContainer nodes;
 	nodes.Create(number_of_nodes);
 
+	// Setup wifi
 	WifiHelper wifi = WifiHelper::Default();
 	wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
 	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default();
@@ -117,11 +115,31 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
 	wifiPhy.SetChannel(wifiChannel.Create());
 	NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, nodes);
+	
 	wifiPhy.EnablePcap(output_filename, devices);
 
-	MobilityHelper mobility;
-	Ptr < ListPositionAllocator > positionAlloc = CreateObject<ListPositionAllocator>();
-
+	// Setup mobility (random node movement within some limits)
+	MobilityHelper mobilityAdhoc;
+	int64_t streamIndex = 0; // used to get consistent mobility across scenarios
+	ObjectFactory pos;
+	pos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
+	pos.Set ("X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=100.0]"));
+	pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=100.0]"));
+	Ptr<PositionAllocator> taPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
+	streamIndex += taPositionAlloc->AssignStreams (streamIndex);
+	std::stringstream ssSpeed;
+	ssSpeed << "ns3::UniformRandomVariable[Min=0.0|Max=" << nodeSpeed << "]";
+	std::stringstream ssPause;
+	ssPause << "ns3::ConstantRandomVariable[Constant=" << nodePause << "]";
+	mobilityAdhoc.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+							  "Speed", StringValue (ssSpeed.str ()),
+							  "Pause", StringValue (ssPause.str ()),
+							  "PositionAllocator", PointerValue (taPositionAlloc));
+	mobilityAdhoc.SetPositionAllocator (taPositionAlloc);
+	mobilityAdhoc.Install (nodes);
+	streamIndex += mobilityAdhoc.AssignStreams (nodes, streamIndex);
+	
+	// Setup DCE
 	DceManagerHelper processManager;
 	processManager.SetTaskManagerAttribute("FiberManagerType", StringValue("UcontextFiberManager"));
 	// processManager.SetLoader ("ns3::DlmLoaderFactory");
@@ -135,6 +153,7 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 
 	processManager.Install(nodes);
 
+	// Print IP stats for the nodes, to stdout (stored in the DCE files-* folders)
 	for (int n = 0; n < number_of_nodes; n++) {
 		Ptr < Node > node = nodes.Get(n);
 		RunIp(node, Seconds(0.2), "link show");
@@ -151,12 +170,6 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	process.ResetArguments();
 	apps = process.Install(nodes.Get(0));
 	apps.Start(Seconds(4.0));
-
-	// Server NetAnim tracing, mobility position
-	float x = ((float) number_of_nodes - 2) * 5.0;
-	float y = 0;
-	AnimationInterface::SetConstantPosition(nodes.Get(0), x, y);
-	positionAlloc->Add(Vector(x, y, 0.0));
 	
 	// Start DCE client programs
 	for (int i = 1; i < number_of_nodes; i++) {
@@ -173,25 +186,17 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 		process.AddArguments("-p", packet_wait_period_usec_str);
 		apps = process.Install(nodes.Get(i));
 		apps.Start(Seconds(4.5));
-
-		// Client NetAnim tracing, mobility position
-		float x = 10 * (i - 1);
-		float y = 40 * sin(3.14 * ((float) i - 1) / ((float) number_of_nodes - 2));
-		positionAlloc->Add(Vector(x, y, 0.0));
-		AnimationInterface::SetConstantPosition(nodes.Get(i), x, y);
 	}
+	
 	// NetAnim tracing
 	AnimationInterface anim(output_filename + "-netanim.xml");
 	anim.EnableIpv4L3ProtocolCounters(Seconds(0), sim_stop_time);
 	anim.EnableQueueCounters(Seconds(0), sim_stop_time);
-	anim.UpdateNodeColor(0, 255.0, 255.0, 0.0); // Yellow
+	anim.UpdateNodeColor(0, 255, 255, 0); // Yellow colored server
 	anim.UpdateNodeDescription(0, "server");
 	for (int i = 1; i < number_of_nodes; i++) {
 		anim.UpdateNodeDescription(i, "client" + to_string(i));
 	}
-	// Install mobility
-	mobility.SetPositionAllocator(positionAlloc);
-	mobility.Install(nodes);
 	
 	Simulator::Stop(sim_stop_time);
 	Simulator::Run();
@@ -203,51 +208,50 @@ std::string run_simulation(Protocol protocol, const char* output_dir, int number
 	cout << left << setw(28) << "Protocol totals file:" << simtotal << endl;
 	cout << left << setw(28) << "Server pcap:" << server_pcap << ".pcap" << endl;
 	start_data_parser(protocol_name_str, number_of_clients, transfer_data * num_cycles, number_of_streams, server_pcap, simtotal, "-print");
-
-	return output_filename;
 }
 
 int main(int argc, char *argv[]) {
-
+	
 	// Number of client network nodes. There is only one server node.
 	int number_of_clients = 3;
 
 	// Amount of bytes to send
-	int transfer_data_start = 1024;
+	int transfer_data_start = 1024*10;
 	int transfer_data_inc = 1024;
-	int transfer_data_end = 1024*200;
+	int transfer_data_end = 1024*100;
 
 	// SCTP settings
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
 	int number_of_streams = 4; // Number of streams
-	int unordered = 0;	// If packets should be sent in order
+	int unordered = 0;	// Unordered packet delivery
 
 	// UDP settings
 	int packet_wait_period_usec = 100000; // How many usec to wait between packets (no congestion control is used)
 
 	// How many cycles to run in on/off-source. Each added cycle multplies the amount of data sent.
-	int num_cycles = 10; // Amount of cycles
+	int num_cycles = 1; // Amount of cycles
 	int time_between_cycles_usec = 2000000; // How long to wait between cycles in usec
 
 	// Packet capture, NetAnim and parsing files are put into this directory
 	const char* output_dir = "my-simulator-output/";
-	// Catch ctrl+c
-	signal(SIGINT, sigint_handler);
+	
 	// Clear output directory if it exists
 	std::string command = "rm -rf " + std::string(output_dir);
 	system(command.c_str());
 	mkdir(output_dir, 0750);
-	// Clear DCE node file system
+	
+	// Clear DCE node file systems
 	system("rm -rf files-*");
 	
-	// Run the simulation
+	// Catch ctrl+c to force kill the process, exit does not seem to be enough...
+	signal(SIGINT, sigint_handler);
+	
+	// Run the simulations over a variable span.
 	int i;
 	for (i = transfer_data_start; i <= transfer_data_end; i += transfer_data_inc) {
 		run_simulation(SCTP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
 		run_simulation(TCP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
 		run_simulation(UDP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
-		//~ run_simulation(DCCP, output_dir, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, packet_wait_period_usec);
-
 	}
 
 }
