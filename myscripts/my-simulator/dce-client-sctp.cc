@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 	unsigned int time_between_cycles = 0;
 	char* receiver_ip = (char *) "\0";
 
-	while ((i = getopt(argc, argv, "p:n:b:a:d:t:s:u")) != -1) {
+	while ((i = getopt(argc, argv, "r:p:n:b:a:d:t:s:u")) != -1) {
 		switch (i) {
 		case 'a':
 			receiver_ip = optarg;
@@ -97,6 +97,8 @@ int main(int argc, char **argv) {
 		perror("SCTP: SCTP_EVENTS error\n");
 		exit(EXIT_FAILURE);
 	}
+	
+	//~ // SCTP retransmission timeout, not used
 	//~ memset(&s_rto, 0, sizeof(s_rto));
 	//~ s_rto.srto_initial = 3000;
 	//~ s_rto.srto_min = 1000;

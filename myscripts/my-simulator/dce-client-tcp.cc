@@ -16,7 +16,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	struct hostent *host;
 	struct sockaddr_in address;
-	int i, status, num_sockets;
+	int current_socket, current_cycle, status, num_sockets, op;
 
 	// Last buffer byte holds null terminator to give 1024 data size in packet.
 	int buffer_size = 1025;
@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
 	int time_between_cycles = 0;
 
 	// Parse input arguments 
-	while ((i = getopt(argc, argv, "p:n:b:a:d:t:s:u")) != -1) {
-		switch (i) {
+	while ((op = getopt(argc, argv, "r:p:n:b:a:d:t:s:u")) != -1) {
+		switch (op) {
 		case 'a':
 			receiver_ip = optarg;
 			break;
@@ -52,32 +52,31 @@ int main(int argc, char *argv[]) {
 	int sockets[num_sockets];
 
 	// Open the requested amount of sockets to distribute data on
-	for (i = 0; i < num_sockets; i++) {
-		sockets[i] = socket(PF_INET, SOCK_STREAM, 0);
+	for (current_socket = 0; current_socket < num_sockets; current_socket++) {
+		sockets[current_socket] = socket(PF_INET, SOCK_STREAM, 0);
 		address.sin_family = AF_INET;
 		address.sin_port = htons(SERVER_PORT);
 		host = gethostbyname(receiver_ip);
 		memcpy(&address.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-		if (connect(sockets[i], (const struct sockaddr *) &address, sizeof(address)) < 0) {
+		if (connect(sockets[current_socket], (const struct sockaddr *) &address, sizeof(address)) < 0) {
 			perror("TCP: Connect failed\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	// Send the specified amount of characters
-	i = 0;
-	int j;
-	for (j = 0; j < num_cycles; j++) {
+	// Loop through connected sockets and send the specified amount of characters
+	current_socket = 0;
+	for (current_cycle = 0; current_cycle < num_cycles; current_cycle++) {
 		SenderContent content(bytes_to_transfer);
 		while (content.fill(buffer, buffer_size)) {
-			send(sockets[i], buffer, (size_t) strlen(buffer), 0);
-			i = (i + 1) % num_sockets;
+			send(sockets[current_socket], buffer, (size_t) strlen(buffer), 0);
+			current_socket = (current_socket + 1) % num_sockets;
 		}
 		if (time_between_cycles > 0)
 			usleep(time_between_cycles);
 	}
-	for (i = 0; i < num_sockets; i++) {
-		close(sockets[i]);
+	for (current_socket = 0; current_socket < num_sockets; current_socket++) {
+		close(sockets[current_socket]);
 	}
 	return 0;
 }

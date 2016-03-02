@@ -20,7 +20,7 @@ void missed_alarm(int signum) {
 int main(int argc, char *argv[]) {
 	struct hostent *host;
 	struct sockaddr_in address;
-	int i, status, num_sockets;
+	int current_socket, current_cycle, status, num_sockets, op;
 
 	// Last buffer byte holds null terminator to give 1024 data size in packet.
 	int buffer_size = 1025;
@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
 	int packet_wait_period_usec = 1000000;
 
 	// Parse input arguments 
-	while ((i = getopt(argc, argv, "p:n:b:a:d:t:s:u")) != -1) {
-		switch (i) {
+	while ((op = getopt(argc, argv, "r:p:n:b:a:d:t:s:u")) != -1) {
+		switch (op) {
 		case 'a':
 			receiver_ip = optarg;
 			break;
@@ -74,8 +74,8 @@ int main(int argc, char *argv[]) {
 
 	// Open the requested amount of sockets to distribute data on
 	int sockets[num_sockets];
-	for (i = 0; i < num_sockets; i++) {
-		sockets[i] = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	for (current_socket = 0; current_socket < num_sockets; current_socket++) {
+		sockets[current_socket] = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		address.sin_family = AF_INET;
 		address.sin_port = htons(SERVER_PORT);
 		host = gethostbyname(receiver_ip);
@@ -83,20 +83,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Send the specified amount of characters
-	i = 0;
-	int j;
-	for (j = 0; j < num_cycles; j++) {
+	current_socket = 0;
+	for (current_cycle = 0; current_cycle < num_cycles; current_cycle++) {
 		SenderContent content(bytes_to_transfer);
 		while (content.fill(buffer, buffer_size)) {
 			sigwait(&alarm_sig, &signum);
-			sendto(sockets[i], buffer, (size_t) strlen(buffer), 0, (const struct sockaddr *) &address, sizeof(address));
-			i = (i + 1) % num_sockets;
+			sendto(sockets[current_socket], buffer, (size_t) strlen(buffer), 0, (const struct sockaddr *) &address, sizeof(address));
+			current_socket = (current_socket + 1) % num_sockets;
 		}
 		if (time_between_cycles > 0)
 			usleep(time_between_cycles);
 	}
-	for (i = 0; i < num_sockets; i++) {
-		close(sockets[i]);
+	for (current_socket = 0; current_socket < num_sockets; current_socket++) {
+		close(sockets[current_socket]);
 	}
 	return 0;
 
