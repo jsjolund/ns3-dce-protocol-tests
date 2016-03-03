@@ -33,12 +33,15 @@ class DataParser {
 	private : double totalData;
 	private : int dataChunks;
 	private : double totalTime;
+	private : int numberOfStreamsPerClient;
 	private : int packetCounter;
+	private : int expectedData;
+	private : int numClients;
 	//Constructor
-	public : DataParser(string, string, string, string, string);
+	public : DataParser(string, string, string, string, string, int, int, int);
 	//Functions
 	public : void GUI();
-	public : void packetExtractor(int);
+	public : void packetExtractor();
 	public : void dataExtractor(ifstream&, int);
 	//Private data extracting functions
 	private : double getPacketLength(string[]);
@@ -50,15 +53,14 @@ class DataParser {
 	private : string getReciever(string[]);
 	private : string getStream(string[]);
 	private : int getPayload(string[]);
-	private : void insertPacketData(int, string, string, double, double, int, int, int);
-	private : void insertTotalData(int, double, double, double, int, int);
+	private : void insertTotalData();
 };
 
-//Function for printing out a line (for GUI)
 string GUI_line();
 void ARG_ERROR_MSG();
 void HELP_MSG();
 void start_data_parser(string protocol, int numClients, int dataBytesPerClient, int numberOfStreamsPerClient, string sourceFile, string targetFile, string print);
 
 #endif /* _DATAPARSER_H */
+
 

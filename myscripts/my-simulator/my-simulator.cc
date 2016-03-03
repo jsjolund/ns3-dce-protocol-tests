@@ -213,7 +213,7 @@ void run_simulation(Protocol protocol, const char* output_dir, int number_of_cli
 int main(int argc, char *argv[]) {
 
 	// Number of client network nodes. There is only one server node.
-	int number_of_clients = 5;
+	int number_of_clients = 1;
 
 	// Amount of data each client sends, in bytes.
 	int transfer_data_start = 1024 * 100;
