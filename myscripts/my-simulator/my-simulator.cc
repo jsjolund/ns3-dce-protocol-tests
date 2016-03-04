@@ -73,8 +73,6 @@ void run_simulation(Protocol protocol, const char* output_dir, int number_of_cli
 		int dccp_packet_period_usec) {
 
 	Time sim_stop_time = Seconds(10000.0);
-	int nodeSpeed = 20; // Node mobility speed in m/s
-	int nodePause = 0; // Node mobility pause in seconds
 
 	std::string transfer_data_str = to_string(transfer_data);
 	std::string time_to_live_str = to_string(time_to_live);
@@ -111,13 +109,13 @@ void run_simulation(Protocol protocol, const char* output_dir, int number_of_cli
 	// Setup wifi
 	WifiHelper wifi = WifiHelper::Default();
 	wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
+	wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode", StringValue("DsssRate1Mbps"));
 	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default();
 	wifiMac.SetType("ns3::AdhocWifiMac");
 	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
 	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
 	wifiPhy.SetChannel(wifiChannel.Create());
 	NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, nodes);
-
 	wifiPhy.EnablePcap(output_filename, devices);
 
 	// Setup mobility (random node movement within some limits)
@@ -129,11 +127,9 @@ void run_simulation(Protocol protocol, const char* output_dir, int number_of_cli
 	pos.Set("Y", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=100.0]"));
 	Ptr < PositionAllocator > taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
 	streamIndex += taPositionAlloc->AssignStreams(streamIndex);
-	std::stringstream ssSpeed;
-	ssSpeed << "ns3::UniformRandomVariable[Min=0.0|Max=" << nodeSpeed << "]";
-	std::stringstream ssPause;
-	ssPause << "ns3::ConstantRandomVariable[Constant=" << nodePause << "]";
-	mobilityAdhoc.SetMobilityModel("ns3::RandomWaypointMobilityModel", "Speed", StringValue(ssSpeed.str()), "Pause", StringValue(ssPause.str()), "PositionAllocator", PointerValue(taPositionAlloc));
+	std::string ssSpeed = "ns3::UniformRandomVariable[Min=0.0|Max=20]"; // Node mobility speed in m/s
+	std::string ssPause = "ns3::ConstantRandomVariable[Constant=0]"; // Node mobility pause in seconds
+	mobilityAdhoc.SetMobilityModel("ns3::RandomWaypointMobilityModel", "Speed", StringValue(ssSpeed), "Pause", StringValue(ssPause), "PositionAllocator", PointerValue(taPositionAlloc));
 	mobilityAdhoc.SetPositionAllocator(taPositionAlloc);
 	mobilityAdhoc.Install(nodes);
 	streamIndex += mobilityAdhoc.AssignStreams(nodes, streamIndex);
@@ -216,9 +212,9 @@ int main(int argc, char *argv[]) {
 	int number_of_clients = 1;
 
 	// Amount of data each client sends, in bytes.
-	int transfer_data_start = 1024 * 2;
+	int transfer_data_start = 1024 * 1000;
 	int transfer_data_inc = 1024 * 4;
-	int transfer_data_end = 1024 * 5000;
+	int transfer_data_end = 1024 * 1000;
 
 	// SCTP settings
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)

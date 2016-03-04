@@ -90,7 +90,7 @@ string GUI_line() {
 void DataParser::packetExtractor() {
 	int current_frame = 1;
 	ifstream reader(filename.c_str());
-	ofstream erase(file_out.c_str());
+	remove(file_out.c_str());
 	string line;
 	string arr[NUM_OF_WORDS];
 
