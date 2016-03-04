@@ -88,10 +88,10 @@ void run_simulation(Protocol protocol, const char* output_dir, int number_of_cli
 
 	std::string sim_id = to_string(clock());
 	std::string output_filename = output_dir + protocol_name_str + "-data-" + transfer_data_str + "-sim-" + sim_id + "-node";
-
+	
 	cout << endl << "********************************************************************************" << endl;
-	cout << left << setw(28) << "Simulation id:" << sim_id << endl;
-	cout << left << setw(28) << "Protocol:" << protocol_name_str << endl;
+	cout << "NS-3 simulation ID(" << sim_id << "), " << protocol_name_str << " protocol.";
+	cout << endl << "********************************************************************************" << endl;
 	cout << left << setw(28) << "Client payload:" << transfer_data_str << "*" << num_cycles << " bytes" << endl;
 	cout << left << setw(28) << "Client amount:" << to_string(number_of_clients) << endl;
 	cout << left << setw(28) << "Time to live:" << time_to_live_str << " ms" << endl;
@@ -216,9 +216,9 @@ int main(int argc, char *argv[]) {
 	int number_of_clients = 1;
 
 	// Amount of data each client sends, in bytes.
-	int transfer_data_start = 1024 * 100;
-	int transfer_data_inc = 1024;
-	int transfer_data_end = 1024 * 100;
+	int transfer_data_start = 1024 * 2;
+	int transfer_data_inc = 1024 * 4;
+	int transfer_data_end = 1024 * 5000;
 
 	// SCTP settings
 	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)

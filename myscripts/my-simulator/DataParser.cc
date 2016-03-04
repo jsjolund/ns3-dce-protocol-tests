@@ -336,11 +336,11 @@ void DataParser::insertTotalData() {
 	if(myfile.is_open()){
 		if(protocol == "sctp"){
 			myfile << packetCounter << " " << totalTime << " "  << totalData << " "
-				  << totalUsefulData << " " << dataPercentage << " " << dataLossPercent << " " << speed << " "
+				  << totalUsefulData << " " << expectedData << " " << dataPercentage << " " << dataLossPercent << " " << speed << " "
 				  << frameSizeAvg << " " << dataChunks << " " << dataChunkAvg << " " << numClients << " " << numberOfStreamsPerClient << "\n";
 		}else{
 			myfile << packetCounter << " " << totalTime << " "  << totalData << " "
-				  << totalUsefulData << " " << dataPercentage << " " << dataLossPercent << " " << speed << " "
+				  << totalUsefulData << " " << expectedData << " " << dataPercentage << " " << dataLossPercent << " " << speed << " "
 				  << frameSizeAvg << " " << "NaN" << " " << "NaN" << " " << numClients << " " << numberOfStreamsPerClient << "\n";
 		}
 	}

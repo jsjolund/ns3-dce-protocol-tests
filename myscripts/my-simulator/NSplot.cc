@@ -17,9 +17,10 @@ void ARG_ERR_MSG();
 
 
 //Define the parameters and units
-string parameters[9][2] = {{"Frame number", ""}, {"Time", "[s]"}, {"Data with headers", "[bytes]"},
-					   {"Data no headers", "[bytes]"}, {"Data percentage", "[%]"}, {"Transmission speed", "[Mbytes/s]"},
-					   {"Frame size", "[bytes]"}, {"Data chunks", ""}, {"Chunk size", "[bytes]"}};
+string parameters[13][2] = {{"Frames", ""}, {"Transmission time", "[s]"}, {"Data with headers", "[MB]"},
+					   {"Data no headers", "[MB]"}, {"Data expected", "[MB]"}, {"Data percentage", "[%]"}, 
+					   {"Data loss", "[%]"}, {"Transmission speed", "[Mbytes/s]"}, {"Avg. frame size", "[bytes]"}, 
+					   {"Data chunks", ""}, {"Avg chunk size", "[bytes]"}, {"Clients", ""}, {"Streams/sockets per client", ""}};
 
 //Declaration of the class
 class NSplot {
@@ -72,16 +73,20 @@ string GUI_line() {
 void NSplot::selectColumns() {
 	cout << "NS-PLOT (v3.0)" << endl;
 	cout << GUI_line() << endl;
-	cout << left << setw(20) << "Available parameters:" << endl;
-	cout << left << setw(20) << "[1] Frame number";
-	cout << left << setw(20) << "[2] Time";
-	cout << left << setw(20) << "[3] Data with headers" << endl;
-	cout << left << setw(20) << "[4] Data no headers";
-	cout << left << setw(20) << "[5] Data percentage";
-	cout << left << setw(20) << "[6] Transmission speed" << endl;
-	cout << left << setw(20) << "[7] Frame size";
-	cout << left << setw(20) << "[8] Data chunks";
-	cout << left << setw(20) << "[9] Chunk size" << endl;
+	cout << left << setw(30) << "Available parameters:" << endl;
+	cout << left << setw(30) << "[1] Frames";
+	cout << left << setw(30) << "[2] Transmission time";
+	cout << left << setw(30) << "[3] Data with headers" << endl;
+	cout << left << setw(30) << "[4] Data no headers";
+	cout << left << setw(30) << "[5] Data expected";
+	cout << left << setw(30) << "[6] Data percentage" << endl;
+	cout << left << setw(30) << "[7] Data loss percentage";
+	cout << left << setw(30) << "[8] Transmission speed";
+	cout << left << setw(30) << "[9] Avg. frame size" << endl;
+	cout << left << setw(30) << "[10] Data chunks";
+	cout << left << setw(30) << "[11] Avg. chunk size";
+	cout << left << setw(30) << "[12] Clients" << endl;
+	cout << left << setw(30) << "[13] Streams/sockets per client" << endl;
 	cout << GUI_line() << endl;
 	cout << "Insert the first column of data that will be the x-axis : ";
 	getline(cin, colA);
