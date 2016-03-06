@@ -67,60 +67,63 @@ static void RunIp(Ptr<Node> node, Time at, std::string str) {
 	apps.Start(at);
 }
 
-void RunSimulation(Protocol protocol, 
-					std::string output_dir, 
-					double sim_stop_time_sec, 
-					WifiPhyStandard wifi_std,
-					std::string wifi_mode,
-					int number_of_clients, 
-					int transfer_data, 
-					int time_to_live, 
-					int number_of_streams, 
-					int unordered, 
-					int num_cycles, 
-					int time_between_cycles_usec, 
-					int udp_send_rate_kbytes_sec, 
-					int dccp_send_rate_kbytes_sec) {
+struct SimSettings {
+	std::string output_dir;
+	WifiPhyStandard wifi_std;
+	std::string wifi_mode;
+	double sim_stop_time_sec;
+	int number_of_clients;
+	int transfer_data_bytes;
+	int sctp_ttl_ms;
+	int num_sockets_streams;
+	int sctp_unordered;
+	int udp_send_rate_kbytes_sec;
+	int dccp_send_rate_kbytes_sec;
+	int num_cycles;
+	int time_between_cycles_usec;
+};
 
-	Time sim_stop_time = Seconds(sim_stop_time_sec);
-	std::string transfer_data_str = to_string(transfer_data);
-	std::string time_to_live_str = to_string(time_to_live);
-	std::string number_of_streams_str = to_string(number_of_streams);
-	std::string unordered_str = to_string(unordered);
+void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
+
+	Time sim_stop_time = Seconds(sim_settings.sim_stop_time_sec);
+	std::string transfer_data_bytes_str = to_string(sim_settings.transfer_data_bytes);
+	std::string sctp_ttl_ms_str = to_string(sim_settings.sctp_ttl_ms);
+	std::string num_sockets_streams_str = to_string(sim_settings.num_sockets_streams);
+	std::string sctp_unordered_str = to_string(sim_settings.sctp_unordered);
 	std::string protocol_name_str = to_string(GetNameForProtocol(protocol));
-	std::string num_cycles_str = to_string(num_cycles);
-	std::string time_between_cycles_usec_str = to_string(time_between_cycles_usec);
-	std::string udp_send_rate_kbytes_sec_str = to_string(udp_send_rate_kbytes_sec);
-	std::string dccp_send_rate_kbytes_sec_str = to_string(dccp_send_rate_kbytes_sec);
+	std::string num_cycles_str = to_string(sim_settings.num_cycles);
+	std::string time_between_cycles_usec_str = to_string(sim_settings.time_between_cycles_usec);
+	std::string udp_send_rate_kbytes_sec_str = to_string(sim_settings.udp_send_rate_kbytes_sec);
+	std::string dccp_send_rate_kbytes_sec_str = to_string(sim_settings.dccp_send_rate_kbytes_sec);
 
 	std::string sim_id = to_string(clock());
-	std::string output_filename = output_dir + protocol_name_str + "-data-" + transfer_data_str + "-sim-" + sim_id + "-node";
+	std::string output_filename = sim_settings.output_dir + protocol_name_str + "-data-" + transfer_data_bytes_str + "-sim-" + sim_id + "-node";
 	
 	cout << endl << "********************************************************************************" << endl;
 	cout << "NS-3 simulation ID(" << sim_id << "), " << protocol_name_str << " protocol.";
 	cout << endl << "********************************************************************************" << endl;
-	cout << left << setw(28) << "Client payload:" << transfer_data_str << "*" << num_cycles << " bytes" << endl;
-	cout << left << setw(28) << "Client amount:" << to_string(number_of_clients) << endl;
-	cout << left << setw(28) << "Time to live:" << time_to_live_str << " ms" << endl;
-	cout << left << setw(28) << "SCTP streams:" << number_of_streams_str << endl;
-	cout << left << setw(28) << "SCTP unordered:" << unordered_str << endl;
-	cout << left << setw(28) << "DCCP send rate:" << dccp_send_rate_kbytes_sec_str << " KB/s" << endl;
-	cout << left << setw(28) << "UDP send rate:" << udp_send_rate_kbytes_sec_str << " KB/s" << endl;
+	cout << left << setw(28) << "Client payload:" << transfer_data_bytes_str << "*" << sim_settings.num_cycles << " bytes" << endl;
+	cout << left << setw(28) << "Client amount:" << to_string(sim_settings.number_of_clients) << endl;
+	cout << left << setw(28) << "SCTP ttl:" << sctp_ttl_ms_str << " ms" << endl;
+	cout << left << setw(28) << "SCTP streams:" << num_sockets_streams_str << endl;
+	cout << left << setw(28) << "SCTP unordered:" << sctp_unordered_str << endl;
+	cout << left << setw(28) << "DCCP target rate:" << dccp_send_rate_kbytes_sec_str << " KB/s" << endl;
+	cout << left << setw(28) << "UDP target rate:" << udp_send_rate_kbytes_sec_str << " KB/s" << endl;
 	cout << left << setw(28) << "Num send cycles:" << num_cycles_str << endl;
 	cout << left << setw(28) << "Time between cycles:" << time_between_cycles_usec_str << " usec" << endl;
 
 	GlobalValue::Bind("ChecksumEnabled", BooleanValue(true));
 
-	int number_of_nodes = number_of_clients + 1;
+	int number_of_nodes = sim_settings.number_of_clients + 1;
 	NodeContainer nodes;
 	nodes.Create(number_of_nodes);
 
 	// Setup wifi
 	WifiHelper wifi = WifiHelper::Default();
-	wifi.SetStandard(wifi_std);
+	wifi.SetStandard(sim_settings.wifi_std);
 	wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", 
-		"DataMode", StringValue(wifi_mode),
-		"ControlMode", StringValue(wifi_mode));
+		"DataMode", StringValue(sim_settings.wifi_mode),
+		"ControlMode", StringValue(sim_settings.wifi_mode));
 	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default();
 	wifiMac.SetType("ns3::AdhocWifiMac");
 	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
@@ -183,10 +186,10 @@ void RunSimulation(Protocol protocol,
 		process.SetStackSize(1 << 16);
 		process.ResetArguments();
 		process.AddArguments("-a", "10.0.0.1");
-		process.AddArguments("-d", transfer_data_str);
-		process.AddArguments("-t", time_to_live_str);
-		process.AddArguments("-u", unordered_str);
-		process.AddArguments("-s", number_of_streams_str);
+		process.AddArguments("-d", transfer_data_bytes_str);
+		process.AddArguments("-t", sctp_ttl_ms_str);
+		process.AddArguments("-u", sctp_unordered_str);
+		process.AddArguments("-s", num_sockets_streams_str);
 		process.AddArguments("-b", time_between_cycles_usec_str);
 		process.AddArguments("-n", num_cycles_str);
 		process.AddArguments("-p", udp_send_rate_kbytes_sec_str);
@@ -211,65 +214,71 @@ void RunSimulation(Protocol protocol,
 
 	// Parse packet capture file
 	std::string server_pcap = output_filename + "-0-0";
-	std::string simtotal = output_dir + protocol_name_str + "_simtotal";
+	std::string simtotal = sim_settings.output_dir + protocol_name_str + "_simtotal";
 	cout << left << setw(28) << "Protocol totals file:" << simtotal << endl;
 	cout << left << setw(28) << "Server pcap:" << server_pcap << ".pcap" << endl;
-	start_data_parser(protocol_name_str, number_of_clients, transfer_data * num_cycles, number_of_streams, server_pcap, simtotal, "-print");
+	start_data_parser(protocol_name_str, sim_settings.number_of_clients, sim_settings.transfer_data_bytes * sim_settings.num_cycles, sim_settings.num_sockets_streams, server_pcap, simtotal, "-print");
 }
 
 int main(int argc, char *argv[]) {
 	
+	SimSettings sim_settings;
+	
 	// Wifi settings
-	WifiPhyStandard wifi_std = WIFI_PHY_STANDARD_80211a;
-	std::string wifi_mode = "OfdmRate54Mbps";
+	sim_settings.wifi_std = WIFI_PHY_STANDARD_80211a;
+	sim_settings.wifi_mode = "OfdmRate54Mbps";
 	
 	// Max time to run a simulation, in seconds
-	double sim_stop_time_sec = 10000;
+	sim_settings.sim_stop_time_sec = 10000;
 	
 	// Number of client network nodes. There is only one server node.
-	int number_of_clients = 1;
+	sim_settings.number_of_clients = 1;
 
 	// Amount of data each client sends, in bytes.
-	int transfer_data_start = 1024 * 10000;
-	int transfer_data_inc = 1024 * 4;
-	int transfer_data_end = transfer_data_start;
+	sim_settings.transfer_data_bytes = 1024;
+	
+	// Number of streams to create for SCTP simulation
+	// and/or sockets to create for UDP, TCP, DCCP.
+	sim_settings.num_sockets_streams = 4;
 
 	// SCTP settings
-	int time_to_live = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
-	int number_of_streams = 4; // Number of streams
-	int unordered = 0;	// Unordered packet delivery
+	sim_settings.sctp_ttl_ms = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
+	sim_settings.sctp_unordered = 0; // Unordered packet delivery
 
 	// UDP and DCCP approximate target send rate in kilobytes/second.
 	// Will not be exact since packet header size is not accounted for.
-	int udp_send_rate_kbytes_sec = 700;
-	int dccp_send_rate_kbytes_sec = 700;
+	sim_settings.udp_send_rate_kbytes_sec = 700;
+	sim_settings.dccp_send_rate_kbytes_sec = 700;
 
 	// How many cycles to run in on/off-source.
-	// Total data sent per client = transfer_data * num_cycles
-	int num_cycles = 1; // Amount of cycles
-	int time_between_cycles_usec = 2000000; // How long to wait between cycles in usec
+	// Total data sent per client = transfer_data_bytes * num_cycles
+	sim_settings.num_cycles = 1;
+	// How long to wait between cycles in usec
+	sim_settings.time_between_cycles_usec = 2000000;
 
-	// Packet capture, NetAnim and parsing files are put into this directory
-	std::string output_dir = "my-simulator-output/";
+	// Packet capture, NetAnim and pcap summary files are put into this directory
+	sim_settings.output_dir = "my-simulator-output/";
 
 	// Clear output directory if it exists
-	std::string command = "rm -rf " + output_dir;
+	std::string command = "rm -rf " + sim_settings.output_dir;
 	system(command.c_str());
-	mkdir(output_dir.c_str(), 0750);
-
+	mkdir(sim_settings.output_dir.c_str(), 0750);
 	// Clear DCE node file systems
 	system("rm -rf files-*");
-
 	// Catch ctrl+c to force kill the process, exit does not seem to be enough...
 	signal(SIGINT, sigint_handler);
 
 	// Run the simulations over a variable span.
-	int i;
-	for (i = transfer_data_start; i <= transfer_data_end; i += transfer_data_inc) {
-		RunSimulation(TCP, output_dir, sim_stop_time_sec, wifi_std, wifi_mode, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, udp_send_rate_kbytes_sec, dccp_send_rate_kbytes_sec);
-		RunSimulation(SCTP, output_dir, sim_stop_time_sec, wifi_std, wifi_mode, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, udp_send_rate_kbytes_sec, dccp_send_rate_kbytes_sec);
-		RunSimulation(UDP, output_dir, sim_stop_time_sec, wifi_std, wifi_mode, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, udp_send_rate_kbytes_sec, dccp_send_rate_kbytes_sec);
-		RunSimulation(DCCP, output_dir, sim_stop_time_sec, wifi_std, wifi_mode, number_of_clients, i, time_to_live, number_of_streams, unordered, num_cycles, time_between_cycles_usec, udp_send_rate_kbytes_sec, dccp_send_rate_kbytes_sec);
+	int min = 1024 * 1000;
+	int inc = 1024 * 10;
+	int max = 1024 * 10000;
+	int var;
+	for (var = min; var <= max; var += inc) {
+		sim_settings.transfer_data_bytes = var;
+		RunSimulation(TCP, sim_settings);
+		RunSimulation(SCTP, sim_settings);
+		RunSimulation(UDP, sim_settings);
+		RunSimulation(DCCP, sim_settings);
 	}
 
 }
