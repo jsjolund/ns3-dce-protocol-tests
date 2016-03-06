@@ -60,9 +60,9 @@ DataParser::DataParser(string sourceFile, string protocol1, string targetFile, s
 void DataParser::GUI() {
 	cout << GUI_line() << "\n";
 	cout << "Data Parser for .pcap files (Version 2.0)" << "\n";
-	cout << left << setw(17) << "Input file: " << filename << "\n";
-	cout << left << setw(17) << "Output file: " << sum_file_out << "\n";
-	cout << left << setw(17) << "Protocol: " << protocol << "\n";
+	cout << left << setw(28) << "Input file: " << filename << "\n";
+	cout << left << setw(28) << "Output file: " << sum_file_out << "\n";
+	cout << left << setw(28) << "Protocol: " << protocol << "\n";
 	if (PRINT_PACKET == true) {
 		cout << GUI_line() << "\n";
 		cout << left << setw(7) << "Frame";

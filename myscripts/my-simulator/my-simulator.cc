@@ -98,7 +98,7 @@ void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
 
 	std::string sim_id = to_string(clock());
 	std::string output_filename = sim_settings.output_dir + protocol_name_str + "-data-" + transfer_data_bytes_str + "-sim-" + sim_id + "-node";
-	
+
 	cout << endl << "********************************************************************************" << endl;
 	cout << "NS-3 simulation ID(" << sim_id << "), " << protocol_name_str << " protocol.";
 	cout << endl << "********************************************************************************" << endl;
@@ -121,9 +121,7 @@ void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
 	// Setup wifi
 	WifiHelper wifi = WifiHelper::Default();
 	wifi.SetStandard(sim_settings.wifi_std);
-	wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", 
-		"DataMode", StringValue(sim_settings.wifi_mode),
-		"ControlMode", StringValue(sim_settings.wifi_mode));
+	wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode", StringValue(sim_settings.wifi_mode), "ControlMode", StringValue(sim_settings.wifi_mode));
 	NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default();
 	wifiMac.SetType("ns3::AdhocWifiMac");
 	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
@@ -221,22 +219,22 @@ void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
 }
 
 int main(int argc, char *argv[]) {
-	
+
 	SimSettings sim_settings;
-	
+
 	// Wifi settings
 	sim_settings.wifi_std = WIFI_PHY_STANDARD_80211a;
 	sim_settings.wifi_mode = "OfdmRate54Mbps";
-	
+
 	// Max time to run a simulation, in seconds
 	sim_settings.sim_stop_time_sec = 10000;
-	
+
 	// Number of client network nodes. There is only one server node.
 	sim_settings.number_of_clients = 1;
 
 	// Amount of data each client sends, in bytes.
-	sim_settings.transfer_data_bytes = 1024;
-	
+	sim_settings.transfer_data_bytes = 1048576; // One megabyte in bytes
+
 	// Number of streams to create for SCTP simulation
 	// and/or sockets to create for UDP, TCP, DCCP.
 	sim_settings.num_sockets_streams = 4;
@@ -269,12 +267,12 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT, sigint_handler);
 
 	// Run the simulations over a variable span.
-	int min = 1024 * 1000;
-	int inc = 1024 * 10;
-	int max = 1024 * 10000;
-	int var;
-	for (var = min; var <= max; var += inc) {
-		sim_settings.transfer_data_bytes = var;
+	int *var = &sim_settings.transfer_data_bytes;
+	int min = 1048576 * 10;
+	int inc = 1048576 * 5;
+	int max = 1048576 * 20;
+
+	for (*var = min; *var <= max; *var += inc) {
 		RunSimulation(TCP, sim_settings);
 		RunSimulation(SCTP, sim_settings);
 		RunSimulation(UDP, sim_settings);
