@@ -15,6 +15,7 @@
 
 void missed_alarm(int signum) {
 	// Missed timer signal, but take no action
+	perror("UDP: Missed timer.");
 }
 
 int main(int argc, char *argv[]) {
@@ -30,7 +31,7 @@ int main(int argc, char *argv[]) {
 	char* receiver_ip = (char *) "\0";
 	int num_cycles = 1;
 	int time_between_cycles = 0;
-	int packet_wait_period_usec = 1000000;
+	int send_rate_kbytes_sec = 1024;
 
 	// Parse input arguments 
 	while ((op = getopt(argc, argv, "r:p:n:b:a:d:t:s:u")) != -1) {
@@ -51,17 +52,19 @@ int main(int argc, char *argv[]) {
 			time_between_cycles = atoi(optarg);
 			break;
 		case 'p':
-			packet_wait_period_usec = atoi(optarg);
+			send_rate_kbytes_sec = atoi(optarg);
 			break;
 		default:
 			break;
 		}
 	}
+	// [us] = [b] / [kb/s] * [10^6 / 2^10]
+	int wait_time_us = (int)((double) buffer_size) / send_rate_kbytes_sec * 976.5625;
 
 	// Set up a timer for when to send packets
 	struct itimerval timer;
 	timer.it_interval.tv_sec = timer.it_value.tv_sec = 0;
-	timer.it_interval.tv_usec = timer.it_value.tv_usec = packet_wait_period_usec;
+	timer.it_interval.tv_usec = timer.it_value.tv_usec = wait_time_us;
 	if (setitimer(ITIMER_REAL, &timer, 0) < 0) {
 		perror("UDP: settimer failed");
 		exit(1);
