@@ -35,7 +35,7 @@ class DataParser {
 	private : double totalTime;
 	private : int numberOfStreamsPerClient;
 	private : int packetCounter;
-	private : int expectedData;
+	private : double expectedData;
 	private : int numClients;
 	//Constructor
 	public : DataParser(string, string, string, string, string, int, int, int);
