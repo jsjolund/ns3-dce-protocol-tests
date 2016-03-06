@@ -323,13 +323,13 @@ bool DataParser::getPacketProtocol(string arr[], int packet) {
 
 void DataParser::insertTotalData() {
 	float dataPercentage = totalUsefulData / totalData * 100;
-	double speed = totalData / totalTime / 1024;
+	double speed = totalData / totalTime / (1024*1024);
 	double dataChunkAvg = totalUsefulData / dataChunks;
 	double frameSizeAvg = totalData/packetCounter;
 	double dataLossPercent = 100 - (totalUsefulData / expectedData * 100);
-	expectedData = expectedData / 1024;
-	totalData = totalData / 1024;
-	totalUsefulData = totalUsefulData / 1024;
+	expectedData = expectedData / (1024*1024);
+	totalData = totalData / (1024*1024);
+	totalUsefulData = totalUsefulData / (1024*1024);
 
 	ofstream myfile;
 	myfile.open(sum_file_out.c_str(), ios::app);
@@ -409,7 +409,6 @@ void start_data_parser(string protocol, int numClients, int dataBytesPerClient, 
 	parser.GUI();
 	parser.packetExtractor();
 }
-
 
 
 
