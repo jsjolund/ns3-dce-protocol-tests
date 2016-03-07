@@ -81,6 +81,9 @@ struct SimSettings {
 	int dccp_send_rate_kbytes_sec;
 	int num_cycles;
 	int time_between_cycles_usec;
+	float max_x_dst;
+	float max_y_dst;
+	float max_speed;
 };
 
 void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
@@ -111,6 +114,9 @@ void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
 	cout << left << setw(28) << "UDP target rate:" << udp_send_rate_kbytes_sec_str << " KB/s" << endl;
 	cout << left << setw(28) << "Num send cycles:" << num_cycles_str << endl;
 	cout << left << setw(28) << "Time between cycles:" << time_between_cycles_usec_str << " usec" << endl;
+	cout << left << setw(28) << "Max X distance:" << to_string(sim_settings.max_x_dst) << " m" << endl;
+	cout << left << setw(28) << "Max Y distance:" << to_string(sim_settings.max_y_dst) << " m" << endl;
+	cout << left << setw(28) << "Max speed:" << to_string(sim_settings.max_speed) << " m/s" << endl;
 
 	GlobalValue::Bind("ChecksumEnabled", BooleanValue(true));
 
@@ -135,13 +141,14 @@ void RunSimulation(Protocol protocol, SimSettings &sim_settings) {
 	int64_t streamIndex = 0; // used to get consistent mobility across scenarios
 	ObjectFactory pos;
 	pos.SetTypeId("ns3::RandomRectanglePositionAllocator");
-	pos.Set("X", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=10.0]"));
-	pos.Set("Y", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=10.0]"));
+	pos.Set("X", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=" + to_string(sim_settings.max_x_dst) + "]"));
+	pos.Set("Y", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=" + to_string(sim_settings.max_y_dst) + "]"));
 	Ptr < PositionAllocator > taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
 	streamIndex += taPositionAlloc->AssignStreams(streamIndex);
-	std::string ssSpeed = "ns3::UniformRandomVariable[Min=0.0|Max=20]"; // Node mobility speed in m/s
+	std::string ssSpeed = "ns3::UniformRandomVariable[Min=0.0|Max=" + to_string(sim_settings.max_speed) + "]"; // Node mobility speed in m/s
 	std::string ssPause = "ns3::ConstantRandomVariable[Constant=0]"; // Node mobility pause in seconds
-	mobilityAdhoc.SetMobilityModel("ns3::RandomWaypointMobilityModel", "Speed", StringValue(ssSpeed), "Pause", StringValue(ssPause), "PositionAllocator", PointerValue(taPositionAlloc));
+	mobilityAdhoc.SetMobilityModel("ns3::RandomWaypointMobilityModel", 
+		"Speed", StringValue(ssSpeed), "Pause", StringValue(ssPause), "PositionAllocator", PointerValue(taPositionAlloc));
 	mobilityAdhoc.SetPositionAllocator(taPositionAlloc);
 	mobilityAdhoc.Install(nodes);
 	streamIndex += mobilityAdhoc.AssignStreams(nodes, streamIndex);
@@ -235,8 +242,7 @@ int main(int argc, char *argv[]) {
 	// Amount of data each client sends, in bytes.
 	sim_settings.transfer_data_bytes = 1048576; // One megabyte in bytes
 
-	// Number of streams to create for SCTP simulation
-	// and/or sockets to create for UDP, TCP, DCCP.
+	// Number of streams to create for SCTP simulation and/or sockets to create for UDP, TCP, DCCP.
 	sim_settings.num_sockets_streams = 4;
 
 	// SCTP settings
@@ -253,6 +259,12 @@ int main(int argc, char *argv[]) {
 	sim_settings.num_cycles = 1;
 	// How long to wait between cycles in usec
 	sim_settings.time_between_cycles_usec = 2000000;
+	
+	// Max distance a network node can move from the center, in meters (?)
+	sim_settings.max_x_dst = 10.0;
+	sim_settings.max_y_dst = 10.0;
+	// Max movement speed of a node, in m/s
+	sim_settings.max_speed = 5.0;
 
 	// Packet capture, NetAnim and pcap summary files are put into this directory
 	sim_settings.output_dir = "my-simulator-output/";
