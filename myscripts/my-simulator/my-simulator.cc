@@ -249,10 +249,9 @@ int main(int argc, char *argv[]) {
 	sim_settings.sctp_ttl_ms = 0; // Time to live of packets in milliseconds (0 == ttl disabled)
 	sim_settings.sctp_unordered = 0; // Unordered packet delivery
 
-	// UDP and DCCP approximate target send rate in kilobytes/second.
-	// Will not be exact since packet header size is not accounted for.
-	sim_settings.udp_send_rate_kbytes_sec = 700;
-	sim_settings.dccp_send_rate_kbytes_sec = 700;
+	// UDP and DCCP approximate client target send rate in kilobytes/second.
+	sim_settings.udp_send_rate_kbytes_sec = 650;
+	sim_settings.dccp_send_rate_kbytes_sec = 650;
 
 	// How many cycles to run in on/off-source.
 	// Total data sent per client = transfer_data_bytes * num_cycles

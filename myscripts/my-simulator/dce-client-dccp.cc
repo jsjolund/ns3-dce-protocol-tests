@@ -60,8 +60,10 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	// Calculate wait time between packages [us] * [10^6 / 2^10] = [b] / [kb/s]
-	int wait_time_us = (int)((((double) buffer_size) / (double) send_rate_kbytes_sec) * 976.5625);
+	// Calculate wait time between packages 
+	// Bytes sent = Buffer size + Size of Ethernet frame + Size of IPv4 Header + Size of DCCP header
+	// Unit conversion: [us] * [10^6 / 2^10] = [b] / [kb/s]
+	int wait_time_us = (int)((((double) buffer_size + 92) / (double) send_rate_kbytes_sec) * 976.5625);
 
 	// Set up a timer for when to send packets
 	struct itimerval timer;
