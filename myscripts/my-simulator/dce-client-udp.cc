@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	// [us] = [b] / [kb/s] * [10^6 / 2^10]
-	int wait_time_us = (int)((double) buffer_size) / send_rate_kbytes_sec * 976.5625;
+	// Calculate wait time between packages [us] * [10^6 / 2^10] = [b] / [kb/s]
+	int wait_time_us = (int)((((double) buffer_size) / (double) send_rate_kbytes_sec) * 976.5625);
 
 	// Set up a timer for when to send packets
 	struct itimerval timer;

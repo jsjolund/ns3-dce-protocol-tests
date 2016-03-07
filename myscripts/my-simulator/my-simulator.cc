@@ -285,8 +285,8 @@ int main(int argc, char *argv[]) {
 	int max = 1048576 * 20;
 
 	for (*var = min; *var <= max; *var += inc) {
-		RunSimulation(TCP, sim_settings);
-		RunSimulation(SCTP, sim_settings);
+		//~ RunSimulation(TCP, sim_settings);
+		//~ RunSimulation(SCTP, sim_settings);
 		RunSimulation(UDP, sim_settings);
 		RunSimulation(DCCP, sim_settings);
 	}
