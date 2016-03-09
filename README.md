@@ -1,5 +1,5 @@
 ###About
-This project aims to asses the performances of the [SCTP](https://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol), [DCCP](https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol), [TCP](https://en.wikipedia.org/wiki/Transmission_Control_Protocol) and [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) network transport-layer protocols during different scenarios, using the network simulator [NS-3](https://www.nsnam.org/). The NS-3 framework  [DCE](https://www.nsnam.org/overview/projects/direct-code-execution/) is used to simulate client/server applications which generate network traffic. For the DCCP, TCP and UDP protocols, the standard Linux kernel implementations are used, while the SCTP protocol uses the external library called [lksctp](http://lksctp.sourceforge.net/).
+This project is a framework for assesing the performances of the [SCTP](https://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol), [DCCP](https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol), [TCP](https://en.wikipedia.org/wiki/Transmission_Control_Protocol) and [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) network transport-layer protocols during scenarios in which multiple client network nodes stream data to a central server. It uses the network simulator [NS-3](https://www.nsnam.org/) and the associated [DCE](https://www.nsnam.org/overview/projects/direct-code-execution/) framework to simulate client/server applications which generate network traffic. For the DCCP, TCP and UDP protocols, the standard Linux kernel implementations are used, while the SCTP protocol uses the external library called [lksctp](http://lksctp.sourceforge.net/).
 
 ###Dependencies
 Using Ubuntu 14.04, install the dependencies:
@@ -89,3 +89,7 @@ Searching for all lines from standard output which contain the word "debug" can 
 ```
 find files-* -name 'stdout' -exec grep 'debug' {} \;
 ```
+
+###Screenshots
+The simulation interface is text based, but the program supports generation of NetAnim trace files in order to visualize node mobility. Below is a screenshot showing a network client sending data over a Wi-Fi network.
+![alt tag](http://i.imgur.com/Fyucte0.png)
