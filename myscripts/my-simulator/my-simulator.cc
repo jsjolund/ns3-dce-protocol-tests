@@ -237,7 +237,7 @@ int main(int argc, char *argv[]) {
 	sim_settings.sim_stop_time_sec = 10000;
 
 	// Number of client network nodes. There is only one server node.
-	sim_settings.number_of_clients = 1;
+	sim_settings.number_of_clients = 3;
 
 	// Amount of data each client sends, in bytes.
 	sim_settings.transfer_data_bytes = 1048576; // One megabyte in bytes
@@ -250,44 +250,63 @@ int main(int argc, char *argv[]) {
 	sim_settings.sctp_unordered = 0; // Unordered packet delivery
 
 	// UDP and DCCP approximate client target send rate in kilobytes/second.
-	sim_settings.udp_send_rate_kbytes_sec = 650;
-	sim_settings.dccp_send_rate_kbytes_sec = 650;
+	// Warning: Setting this to a higher value than the network topology allows
+	// may result in undefined behaviour.
+	sim_settings.udp_send_rate_kbytes_sec = 250;
+	sim_settings.dccp_send_rate_kbytes_sec = 250;
 
-	// How many cycles to run in on/off-source.
+	// How many cycles to run in ON/OFF-source.
 	// Total data sent per client = transfer_data_bytes * num_cycles
 	sim_settings.num_cycles = 1;
 	// How long to wait between cycles in usec
 	sim_settings.time_between_cycles_usec = 2000000;
 	
-	// Max distance a network node can move from the center, in meters (?)
+	// Mobility: Max distance a network node can move from the center, in meters (?)
 	sim_settings.max_x_dst = 10.0;
 	sim_settings.max_y_dst = 10.0;
-	// Max movement speed of a node, in m/s
+	// Mobility: Max movement speed of a node, in m/s
 	sim_settings.max_speed = 5.0;
 
 	// Packet capture, NetAnim and pcap summary files are put into this directory
 	sim_settings.output_dir = "my-simulator-output/";
+	
+	// Remove the results from any previous simulation.
+	bool remove_output_dir = true;
+	// Remove the files-* folders created by DCE
+	bool remove_dce_file_system = true;
+	// Remove or keep large output files in order to save space on hard drive.
+	bool remove_pcap_files = true;
+	bool remove_parse_files = true;
+	bool remove_netanim_files = true;
 
-	// Clear output directory if it exists
-	std::string command = "rm -rf " + sim_settings.output_dir;
-	system(command.c_str());
-	mkdir(sim_settings.output_dir.c_str(), 0750);
-	// Clear DCE node file systems
-	system("rm -rf files-*");
 	// Catch ctrl+c to force kill the process, exit does not seem to be enough...
 	signal(SIGINT, sigint_handler);
+	// Clear output directory if it exists
+	if (remove_output_dir) {
+		std::string command = "rm -rf " + sim_settings.output_dir;
+		system(command.c_str());
+		mkdir(sim_settings.output_dir.c_str(), 0750);
+	}
+	std::string remove_pcap_files_cmd = "rm -v " + sim_settings.output_dir + "*.pcap";
+	std::string remove_parse_files_cmd = "rm -v " + sim_settings.output_dir + "*.txt";
+	std::string remove_netanim_files_cmd = "rm -v " + sim_settings.output_dir + "*netanim.xml";
 
 	// Run the simulations over a variable span.
 	int *var = &sim_settings.transfer_data_bytes;
-	int min = 1048576 * 10;
+	int min = 1048576 * 1;
 	int inc = 1048576 * 5;
-	int max = 1048576 * 20;
+	int max = 1048576 * 100;
 
 	for (*var = min; *var <= max; *var += inc) {
-		//~ RunSimulation(TCP, sim_settings);
-		//~ RunSimulation(SCTP, sim_settings);
-		RunSimulation(UDP, sim_settings);
 		RunSimulation(DCCP, sim_settings);
+		RunSimulation(UDP, sim_settings);
+		RunSimulation(TCP, sim_settings);
+		RunSimulation(SCTP, sim_settings);
+		
+		if (remove_dce_file_system) system("rm -rf files-*");
+		if (remove_pcap_files) system(remove_pcap_files_cmd.c_str());
+		if (remove_parse_files) system(remove_parse_files_cmd.c_str());
+		if (remove_netanim_files) system(remove_netanim_files_cmd.c_str());
 	}
 
 }
