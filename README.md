@@ -1,7 +1,7 @@
-###About
+### About
 This project is a framework for assesing the performances of the [SCTP](https://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol), [DCCP](https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol), [TCP](https://en.wikipedia.org/wiki/Transmission_Control_Protocol) and [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) network transport-layer protocols during scenarios in which multiple client network nodes stream data to a central server. It uses the network simulator [NS-3](https://www.nsnam.org/) and the associated [DCE](https://www.nsnam.org/overview/projects/direct-code-execution/) framework to simulate client/server applications which generate network traffic. For the DCCP, TCP and UDP protocols, the standard Linux kernel implementations are used, while the SCTP protocol uses the external library called [lksctp](http://lksctp.sourceforge.net/).
 
-###Dependencies
+### Dependencies
 Using Ubuntu 14.04, install the dependencies:
 
 ```
@@ -14,7 +14,7 @@ apt-get install gcc g++ python python-dev qt4-dev-tools libqt4-dev mercurial bzr
 ```
 Optional: ```apt-get install python-pygccxml```, but having it installed may cause build errors...
 
-###Building NS-3 with DCE
+### Building NS-3 with DCE
 First, install the Bake build tool. In a terminal, change to the directory in which you wish to install it, then run
 ```
 hg clone http://code.nsnam.org/bake bake
@@ -39,7 +39,7 @@ then add [compiler-gcc5.h](compiler-gcc5.h) to ```source/net-next-sim-2.6.36/inc
 [Link to the original installation instructions](https://www.nsnam.org/docs/dce/manual/html/getting-started.html#building-dce-basic-mode).
 
 
-###Required system settings
+### Required system settings
 Most Linux systems place restrictions on how many user processes can be run at the same time, and how many files each process can open. This project needs to run multiple NS-3 simulation instances in order to generate useful network statistics, which creates a lot of files and processes. Therefore it is necessary to append the following lines to the end of ```/etc/security/limits.conf```:
 ```
 *         hard    nproc       65536
@@ -49,7 +49,7 @@ Most Linux systems place restrictions on how many user processes can be run at t
 ```
 Restart your computer to apply the settings. For more information see the [DCE manual](https://www.nsnam.org/docs/dce/release/1.4/manual/singlehtml/index.html#processes-limit-resource-temporarily-unavailable).
 
-###Downloading the project
+### Downloading the project
 Assuming the NS-3 DCE installation directory
 ```
 export NS3_HOME="$HOME/dce"
@@ -62,7 +62,7 @@ git fetch
 git checkout -t origin/master
 ```
 
-###Running
+### Running
 ```
 ./waf configure --with-ns3=$NS3_HOME/build --prefix=$NS3_HOME/build \
                 --enable-kernel-stack=$NS3_HOME/source/net-next-sim-2.6.36/arch
@@ -70,7 +70,7 @@ git checkout -t origin/master
 ./waf --run my-simulator
 ```
 
-###Plotting
+### Plotting
 The plotting program is separate from the simulation. To plot the results from a simulation, run:
 ```
 cd $NS3_HOME/source/ns-3-dce
@@ -90,6 +90,6 @@ Searching for all lines from standard output which contain the word "debug" can 
 find files-* -name 'stdout' -exec grep 'debug' {} \;
 ```
 
-###Screenshots
+### Screenshots
 The simulation interface is text based, but the program supports generation of NetAnim trace files in order to visualize node mobility. Below is a screenshot showing a network client sending data over a Wi-Fi network.
 ![alt tag](http://i.imgur.com/Fyucte0.png)
