@@ -77,7 +77,7 @@ cd $NS3_HOME/source/ns-3-dce
 build/myscripts/my-simulator/bin/./NSplot output.png my-simulator-output/*.dat -2d
 ```
 
-###Useful commands
+### Useful commands
 Output from the ```DceApplicationHelper``` processes, i.e. the SCTP server and client programs, are stored in the folders ```$NS3_HOME/source/ns-3-dce/files-*``` where the star is the NS-3 ```NodeContainer``` id number.
 
 To print what was written to standard output with e.g. ```printf("debug output")``` run
